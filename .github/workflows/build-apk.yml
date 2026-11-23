@@ -1,24 +1,16 @@
-name: Build DRxGuard Android APK
+name: Build & Publish DRxGuard APK
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'APK Build Type'
-        required: true
-        default: 'debug'
-        type: choice
-        options:
-          - debug
-          - release
+
+permissions:
+  contents: write
 
 jobs:
-  build-apk:
-    name: Build Android APK
+  build-and-publish-apk:
+    name: Build DRxGuard APK
     runs-on: ubuntu-latest
 
     steps:
@@ -40,20 +32,14 @@ jobs:
           gradle-version: '9.3.1'
 
       - name: Prepare Debug Keystore
-        if: ${{ inputs.build_type != 'release' }}
-        env:
-          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
           if [ -f "debug.keystore" ]; then
             echo "Using existing debug.keystore"
           elif [ -f "debug.keystore.base64" ]; then
-            echo "Decoding debug.keystore from debug.keystore.base64 (matches Firebase SHA-1/SHA-256)"
+            echo "Decoding debug.keystore from debug.keystore.base64"
             base64 -d debug.keystore.base64 > debug.keystore
-          elif [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
-            echo "Decoding debug.keystore from GitHub Secret"
-            echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > debug.keystore
           else
-            echo "Generating fallback debug.keystore"
+            echo "Generating debug.keystore"
             keytool -genkeypair -v \
               -keystore debug.keystore \
               -storepass android \
@@ -65,41 +51,30 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Prepare Release Keystore
-        if: ${{ inputs.build_type == 'release' }}
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "Error: KEYSTORE_BASE64 secret is required for release builds."
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 -d > my-upload-key.jks
-
       - name: Build Debug APK
-        if: ${{ inputs.build_type != 'release' }}
         run: gradle assembleDebug --stacktrace
 
-      - name: Build Release APK
-        if: ${{ inputs.build_type == 'release' }}
+      - name: Prepare Direct Download APK
+        run: |
+          mkdir -p release-apk
+          cp app/build/outputs/apk/debug/app-debug.apk release-apk/DRxGuard.apk
+
+      - name: Upload APK to Actions Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DRxGuard-APK
+          path: release-apk/DRxGuard.apk
+          retention-days: 30
+
+      - name: Publish Direct Download on GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: DRxGuard Latest APK
+          body: |
+            Automated build of **DRxGuard** Android APK.
+            Tap **DRxGuard.apk** below to download and install directly on Android.
+          files: release-apk/DRxGuard.apk
+          make_latest: true
         env:
-          KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle assembleRelease --stacktrace
-
-      - name: Upload Debug APK Artifact
-        if: ${{ inputs.build_type != 'release' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: DRxGuard-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 30
-
-      - name: Upload Release APK Artifact
-        if: ${{ inputs.build_type == 'release' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: DRxGuard-release-apk
-          path: app/build/outputs/apk/release/*.apk
-          retention-days: 30
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
