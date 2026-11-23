@@ -36,7 +36,7 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Prepare Debug Keystore
+      - name: Prepare Debug Keystore & Verify Config
         run: |
           if [ -f "debug.keystore" ]; then
             echo "Using existing debug.keystore"
@@ -56,13 +56,20 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
+          if [ ! -f "app/google-services.json" ]; then
+            echo "::error::app/google-services.json is missing in this GitHub repository! Please push/upload app/google-services.json from AI Studio so Firebase & Google Sign-In can compile."
+            exit 1
+          fi
+          echo "Verified app/google-services.json and debug.keystore are present."
+
       - name: Build Debug APK
+        env:
+          GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"
         run: |
           gradle :app:assembleDebug \
-            --no-daemon \
+            --no-configuration-cache \
             --max-workers=2 \
-            -Dorg.gradle.jvmargs="-Xmx3584m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8" \
-            --stacktrace
+            --console=plain
 
       - name: Prepare Direct Download APK
         run: |
