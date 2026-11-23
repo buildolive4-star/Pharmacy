@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile, preferences, saved medicines, and optional consented health profile.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase UID" },
+        "fullName": { "type": "string", "description": "User full name (1..100 chars)" },
+        "email": { "type": "string", "description": "User email address" },
+        "mobileNumber": { "type": "string", "description": "Optional mobile number" },
+        "dateOfBirth": { "type": "string", "description": "Optional date of birth" },
+        "preferredLanguage": { "type": "string", "description": "Preferred AI Pharmacist & UI language" },
+        "darkMode": { "type": "boolean", "description": "User dark mode preference" },
+        "healthConsentGranted": { "type": "boolean", "description": "Explicit user consent for optional health fields" },
+        "heightCm": { "type": "number", "description": "Optional height in cm" },
+        "weightKg": { "type": "number", "description": "Optional weight in kg" },
+        "allergies": { "type": "string", "description": "Optional known allergies" },
+        "conditions": { "type": "string", "description": "Optional existing health conditions" },
+        "emergencyContact": { "type": "string", "description": "Optional emergency contact" },
+        "savedMedicineIds": { "type": "array", "description": "Bookmarked medicine IDs (max 100)" },
+        "expiryAlertDays": { "type": "integer", "description": "Default days before expiry alert (1..180)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp written with FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp written with FieldValue.serverTimestamp()" }
+      },
+      "required": ["userId", "fullName", "preferredLanguage", "healthConsentGranted", "savedMedicineIds", "createdAt", "updatedAt"]
+    },
+    "MedicineReminder": {
+      "title": "MedicineReminder",
+      "description": "User-entered medication reminder schedule and adherence status.",
+      "type": "object",
+      "properties": {
+        "medicineName": { "type": "string" },
+        "strength": { "type": "string" },
+        "dosageForm": { "type": "string" },
+        "prescribedDose": { "type": "string" },
+        "scheduleType": { "type": "string" },
+        "reminderTimes": { "type": "array" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "prescribingProfessional": { "type": "string" },
+        "instructions": { "type": "string" },
+        "status": { "type": "string", "enum": ["UPCOMING", "TAKEN", "SNOOZED", "SKIPPED", "MISSED"] },
+        "createdAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" }
+      },
+      "required": ["medicineName", "dosageForm", "prescribedDose", "scheduleType", "reminderTimes", "startDate", "status", "createdAt", "updatedAt"]
+    },
+    "CabinetMedicine": {
+      "title": "CabinetMedicine",
+      "description": "Digital medicine cabinet item tracked for expiry alerts.",
+      "type": "object",
+      "properties": {
+        "medicineName": { "type": "string" },
+        "brand": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "expiryDate": { "type": "string", "description": "YYYY-MM-DD" },
+        "quantity": { "type": "integer" },
+        "strength": { "type": "string" },
+        "storageLocation": { "type": "string" },
+        "alertDaysBefore": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" }
+      },
+      "required": ["medicineName", "expiryDate", "quantity", "alertDaysBefore", "createdAt", "updatedAt"]
+    },
+    "BmiEntry": {
+      "title": "BmiEntry",
+      "description": "Historical BMI calculation entry.",
+      "type": "object",
+      "properties": {
+        "bmiValue": { "type": "number" },
+        "category": { "type": "string" },
+        "heightCm": { "type": "number" },
+        "weightKg": { "type": "number" },
+        "recordedDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" }
+      },
+      "required": ["bmiValue", "category", "heightCm", "weightKg", "recordedDate", "createdAt"]
+    },
+    "SavedReport": {
+      "title": "SavedReport",
+      "description": "Saved Drug Interaction, LabGuard, Pill Scanner, or Pregnancy educational report.",
+      "type": "object",
+      "properties": {
+        "reportType": { "type": "string", "enum": ["INTERACTION", "LABGUARD", "SCANNER", "PREGNANCY"] },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "severity": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" }
+      },
+      "required": ["reportType", "title", "summary", "severity", "createdAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "User notification center item.",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" }
+      },
+      "required": ["category", "title", "message", "read", "createdAt"]
+    },
+    "AdminMedicine": {
+      "title": "AdminMedicine",
+      "description": "Admin-managed pharmaceutical database entry published for all signed-in users.",
+      "type": "object",
+      "properties": {
+        "genericName": { "type": "string" },
+        "brandNames": { "type": "array" },
+        "drugClass": { "type": "string" },
+        "strengths": { "type": "array" },
+        "dosageForms": { "type": "array" },
+        "composition": { "type": "string" },
+        "therapeuticUses": { "type": "string" },
+        "mechanismOfAction": { "type": "string" },
+        "commonSideEffects": { "type": "string" },
+        "precautions": { "type": "string" },
+        "published": { "type": "boolean" },
+        "updatedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "FieldValue.serverTimestamp()" }
+      },
+      "required": ["genericName", "brandNames", "drugClass", "strengths", "dosageForms", "composition", "therapeuticUses", "mechanismOfAction", "commonSideEffects", "precautions", "published", "updatedBy", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-isolated user profile, preferences, and consented health details."
+    },
+    "/users/{userId}/reminders/{reminderId}": {
+      "schema": { "$ref": "#/entities/MedicineReminder" },
+      "description": "Owner-isolated smart medication reminders."
+    },
+    "/users/{userId}/cabinet/{itemId}": {
+      "schema": { "$ref": "#/entities/CabinetMedicine" },
+      "description": "Owner-isolated medicine cabinet items for expiry tracking."
+    },
+    "/users/{userId}/bmi_history/{entryId}": {
+      "schema": { "$ref": "#/entities/BmiEntry" },
+      "description": "Owner-isolated BMI history entries."
+    },
+    "/users/{userId}/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/SavedReport" },
+      "description": "Owner-isolated saved pharmaceutical and lab analysis reports."
+    },
+    "/users/{userId}/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Owner-isolated universal notification center entries."
+    },
+    "/admin_medicines/{medicineId}": {
+      "schema": { "$ref": "#/entities/AdminMedicine" },
+      "description": "Admin-managed pharmaceutical reference catalog entries."
+    }
+  }
+}

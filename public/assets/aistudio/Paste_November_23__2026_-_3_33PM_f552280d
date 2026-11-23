@@ -1,0 +1,1618 @@
+PROJECT NAME: DRxGuard
+
+PROJECT CATEGORY
+
+AI-Powered Pharmaceutical Intelligence, Medicine Information & Healthcare Assistance Platform.
+
+PROJECT VISION
+
+Build DRxGuard, an advanced, visually stunning, highly interactive pharmaceutical and healthcare application.
+
+The application should combine:
+
+- AI Pharmaceutical Assistant
+- Drug Interaction Intelligence
+- Medicine Information Database
+- Medicine Comparison
+- Medicine Identification Scanner
+- Pregnancy Support
+- Health Calculators
+- Laboratory Report Understanding
+- Medicine Management
+- Smart Notifications
+- Multilingual AI Assistance
+
+The application must include all 16 specified features.
+
+IMPORTANT:
+This should not look like a basic medicine reminder application or a generic hospital management system.
+
+It should look like a premium international medical technology product.
+
+The UI must be extremely professional, modern, futuristic, clean, colourful, visually rich and easy to understand.
+
+Build a complete interactive prototype with functional navigation and working demo interactions.
+
+---
+
+1. BRAND IDENTITY & DESIGN SYSTEM
+
+Create a premium pharmaceutical technology brand.
+
+Brand Name: DRxGuard
+
+Tagline:
+
+"Your Intelligent Medicine Companion."
+
+Alternative tagline:
+
+"Smarter Medicine. Safer Decisions."
+
+BRAND PERSONALITY
+
+The application should communicate:
+
+- Trust
+- Scientific accuracy
+- Medical intelligence
+- Professionalism
+- Innovation
+- Patient safety
+- Simplicity
+
+PRIMARY COLOUR PALETTE
+
+Use a beautiful combination of:
+
+Primary Medical Blue: #1677FF
+
+Deep Navy: #102A43
+
+Electric Cyan: #25C9E8
+
+Medical Teal: #12B8A6
+
+Soft White: #FFFFFF
+
+Light Blue Background: #F2F8FF
+
+Premium Purple: #7957E8
+
+Success Green: #18B77A
+
+Warning Amber: #F5A623
+
+Danger Red: #E74C5B
+
+VISUAL DESIGN STYLE
+
+Use:
+
+- Premium 3D medical illustrations.
+- Glassmorphism.
+- Soft neumorphism.
+- Frosted glass cards.
+- Smooth gradient backgrounds.
+- Floating dashboard cards.
+- Rounded corners.
+- Soft realistic shadows.
+- Modern typography.
+- Beautiful medical icons.
+- Animated scientific elements.
+- Subtle glowing effects.
+- Premium illustrations.
+- Interactive charts.
+- Clean information hierarchy.
+
+Use 3D medical objects such as:
+
+- Capsules.
+- Tablets.
+- DNA structures.
+- Medical cross.
+- Molecular structures.
+- Human anatomy.
+- Heart illustrations.
+- Laboratory equipment.
+- Microscope.
+- Medical scanner.
+- Healthcare AI assistant.
+
+Avoid making every screen overly colourful. Maintain professional readability.
+
+The background should primarily be white and light blue with dark navy text and selected colourful accents.
+
+---
+
+2. SPLASH SCREEN
+
+Create an extremely attractive animated splash screen.
+
+Design
+
+- Premium DRxGuard logo in the centre.
+- Glowing medical cross.
+- Animated DNA helix.
+- Floating medicine capsules.
+- Subtle molecular particles.
+- Blue and cyan gradient background.
+
+Logo animation:
+
+A medical cross appears first, followed by the DRxGuard wordmark.
+
+Below logo:
+
+"Your Intelligent Medicine Companion"
+
+Loading animation:
+
+A premium circular scientific loading animation.
+
+Transition smoothly into the onboarding screens.
+
+---
+
+3. ONBOARDING EXPERIENCE
+
+Create 3 beautiful onboarding screens.
+
+SCREEN 1
+
+Headline:
+
+"Understand Your Medicines Better"
+
+Illustration:
+A premium 3D medicine capsule surrounded by scientific molecular elements.
+
+Description:
+Explore medicine information, interactions, precautions and pharmaceutical knowledge.
+
+SCREEN 2
+
+Headline:
+
+"Smarter Medication Management"
+
+Illustration:
+3D medicine reminder, calendar and pill organizer.
+
+Description:
+Manage medicine schedules, expiry dates and medication information in one place.
+
+SCREEN 3
+
+Headline:
+
+"Healthcare Intelligence Powered by AI"
+
+Illustration:
+Futuristic medical AI assistant with a holographic medical interface.
+
+Description:
+Get understandable pharmaceutical information and healthcare education in multiple languages.
+
+Buttons:
+
+- Skip
+- Next
+- Get Started
+
+---
+
+4. LOGIN & REGISTRATION
+
+Create a premium authentication interface.
+
+Features:
+
+- Mobile number login.
+- Email login.
+- OTP verification.
+- Password authentication.
+- Google sign-in placeholder.
+- Forgot password.
+- Create account.
+
+Registration fields:
+
+- Full name.
+- Email.
+- Mobile number.
+- Date of birth.
+- Preferred language.
+- Password.
+
+Optional profile information:
+
+- Height.
+- Weight.
+- Emergency contact.
+
+Collect sensitive health information only when required, with clear consent.
+
+Add privacy and terms acceptance.
+
+---
+
+5. MAIN HOME DASHBOARD
+
+This is the most important screen.
+
+Create an extremely beautiful medical technology dashboard.
+
+TOP HEADER
+
+Left:
+
+- Three-line hamburger menu.
+
+Centre:
+
+- DRxGuard logo.
+
+Right:
+
+- Notification bell.
+- Profile avatar.
+
+GREETING SECTION
+
+"Good Morning!"
+
+"Welcome to DRxGuard"
+
+Display the current date.
+
+AI SEARCH BAR
+
+Create a large futuristic search component.
+
+Placeholder:
+
+"Search medicines, symptoms, drug interactions..."
+
+Features:
+
+- Search icon.
+- Voice search.
+- Camera scanner shortcut.
+- AI question shortcut.
+
+HERO AI CARD
+
+Create a large premium gradient card.
+
+Use a 3D AI medical assistant illustration.
+
+Headline:
+
+"Meet Your AI Pharmacist"
+
+Description:
+
+"Get understandable information about medicines, interactions and pharmaceutical topics."
+
+Button:
+
+"Ask AI Now"
+
+Add a subtle animated glowing effect.
+
+QUICK ACTIONS
+
+Create an attractive 2-column grid with 3D icons.
+
+1. Drug Interaction
+2. Side Effect Checker
+3. Compare Drugs
+4. Medicine Alternatives
+5. Pill Scanner
+6. Medicine Reminder
+7. BMI Calculator
+8. LabGuard
+
+PREGNANCY SUPPORT CARD
+
+Create a separate attractive card.
+
+Title:
+
+"Pregnancy Support"
+
+Subtitle:
+
+"Track pregnancy milestones and explore helpful educational tools."
+
+Button:
+
+"Explore Tools"
+
+MEDICINE LIBRARY
+
+Display popular medicine categories.
+
+- Antibiotics.
+- Analgesics.
+- Antacids.
+- Antihistamines.
+- Antidiabetics.
+- Antihypertensives.
+
+ADDITIONAL SECTIONS
+
+- Recently viewed medicines.
+- Recently used tools.
+- Saved medicines.
+- Upcoming medicine reminders.
+- Medicine expiry alerts.
+- Latest pharmaceutical articles.
+- Educational health information.
+
+BOTTOM NAVIGATION
+
+Create a premium bottom navigation bar.
+
+Tabs:
+
+1. Home
+2. Explore
+3. AI Assistant
+4. My Medicines
+5. Profile
+
+Use animated active icons and smooth transitions.
+
+---
+
+6. UNIVERSAL THREE-LINE MENU
+
+The hamburger menu should open a beautiful animated side drawer.
+
+PROFILE HEADER
+
+Display:
+
+- User profile image.
+- Full name.
+- Email.
+- Account status.
+- Edit profile button.
+
+MENU CATEGORIES
+
+HEALTH TOOLS
+
+- Drug Interaction Checker
+- Side Effect Checker
+- Compare Drugs
+- Medicine Alternatives
+- Pill Scanner
+- BMI Calculator
+
+PREGNANCY SUPPORT
+
+- Due Date Countdown
+- Fertility Forecaster
+- Growth Tracker
+- Symptom Analysis
+
+MEDICINE MANAGEMENT
+
+- Smart Medicine Reminder
+- My Medicine Cabinet
+- Expiry Tracker
+- Saved Medicines
+
+PHARMACEUTICAL KNOWLEDGE
+
+- Medicine Library
+- Mechanism of Action
+- Health Conditions
+- Drug Classes
+
+ADVANCED TOOLS
+
+- LabGuard
+- Medicine Change Simulator
+- AI Pharmacist
+
+OTHER
+
+- Notifications
+- My Reports
+- Settings
+- Language
+- Privacy & Security
+- Help & Support
+- About DRxGuard
+- Logout
+
+Each menu item should have a beautiful icon and a short description.
+
+The drawer should support smooth scrolling and animated expansion of categories.
+
+---
+
+7. FEATURE 01 – DRUG INTERACTION CHECKER
+
+Create a professional drug interaction analysis interface.
+
+MAIN SCREEN
+
+Headline:
+
+"Check Drug Interactions"
+
+Description:
+
+"Understand potential interactions between multiple medicines."
+
+MEDICINE INPUT
+
+Allow users to:
+
+- Search medicine names.
+- Search generic names.
+- Search active ingredients.
+- Add multiple medicines.
+- Remove medicines.
+- Select strength and dosage form when relevant.
+
+Display selected medicines as premium cards.
+
+Button:
+
+"Check Interactions"
+
+RESULTS SCREEN
+
+Display:
+
+- Interaction detected.
+- Medicine names.
+- Active ingredients.
+- Interaction severity.
+- Description of interaction.
+- Possible clinical effects.
+- Supporting evidence.
+- Recommended precaution information.
+- Source and last updated date.
+
+SEVERITY INDICATORS
+
+Use:
+
+- High severity: Red.
+- Moderate severity: Orange.
+- Low severity: Yellow.
+- No known interaction found: Green/neutral.
+
+Never interpret an absent database result as proof that no interaction exists.
+
+Display appropriate medical safety warnings.
+
+Add:
+
+- Save report.
+- Share report.
+- Check another combination.
+
+---
+
+8. FEATURE 02 – SIDE EFFECT CHECKER
+
+Create a clean pharmaceutical information screen.
+
+INPUT
+
+Search medicine by:
+
+- Brand name.
+- Generic name.
+- Active ingredient.
+
+MEDICINE RESULT CARD
+
+Display:
+
+- Medicine name.
+- Brand.
+- Generic ingredient.
+- Strength.
+- Drug category.
+- Dosage form.
+
+SIDE EFFECT CATEGORIES
+
+COMMON SIDE EFFECTS
+
+Display commonly reported adverse effects.
+
+SERIOUS SIDE EFFECTS
+
+Display important serious adverse reactions.
+
+RARE SIDE EFFECTS
+
+Display less common reported reactions where reliable information is available.
+
+DETAILS
+
+For every side effect show:
+
+- Name.
+- Description.
+- Frequency, if established.
+- Severity.
+- Relevant warnings.
+- Source.
+
+Add a clear emergency warning for symptoms that require urgent medical attention.
+
+Include:
+
+"Do not stop or change prescribed medication without consulting a qualified healthcare professional, except when seeking emergency care."
+
+---
+
+9. FEATURE 03 – COMPARE DRUGS
+
+Create a premium side-by-side comparison interface.
+
+INPUT
+
+Medicine A
+Medicine B
+
+Allow users to add two or more medicines where supported.
+
+COMPARISON TABLE
+
+Compare:
+
+- Brand names.
+- Generic names.
+- Active ingredients.
+- Drug classes.
+- Therapeutic uses.
+- Mechanism of action.
+- Available strengths.
+- Dosage forms.
+- Side effects.
+- Contraindications.
+- Precautions.
+- Important warnings.
+
+VISUAL DESIGN
+
+Use two premium comparison cards.
+
+Use clear comparison indicators:
+
+- Same ingredient.
+- Different ingredient.
+- Similar therapeutic category.
+- Different strength.
+- Different dosage form.
+
+Do not automatically label one medicine as better.
+
+---
+
+10. FEATURE 04 – MEDICINE ALTERNATIVES
+
+Create an advanced medicine alternative finder.
+
+INPUT
+
+Search medicine.
+
+ANALYSIS
+
+Identify:
+
+- Brand name.
+- Generic ingredient.
+- Salt composition.
+- Strength.
+- Dosage form.
+- Route of administration.
+
+RESULT SCREEN
+
+Display matching brands.
+
+Each card should contain:
+
+- Brand name.
+- Generic composition.
+- Strength.
+- Dosage form.
+- Manufacturer.
+- Available information.
+- Relevant differences.
+
+Filters:
+
+- Brand.
+- Manufacturer.
+- Strength.
+- Dosage form.
+
+IMPORTANT:
+
+Show exact ingredient and strength matches separately from medicines that only have similar therapeutic uses.
+
+Clearly communicate that brand substitution requires verification by a doctor or registered pharmacist.
+
+Do not recommend automatic medicine replacement.
+
+---
+
+11. FEATURE 05 – PREGNANCY SUPPORT
+
+Create a separate premium pregnancy dashboard.
+
+Use a soft combination of lavender, sky blue, pink and white.
+
+Display a beautiful 3D pregnancy illustration.
+
+Headline:
+
+"Your Pregnancy Companion"
+
+Four major modules:
+
+A. DUE DATE COUNTDOWN
+
+Input:
+
+- Last menstrual period.
+- Cycle information, where applicable.
+
+Display:
+
+- Estimated due date.
+- Pregnancy week.
+- Pregnancy day.
+- Remaining days.
+- Pregnancy timeline.
+
+B. FERTILITY FORECASTER
+
+Input:
+
+- Last menstrual period.
+- Average cycle length.
+- Cycle regularity.
+
+Display:
+
+- Estimated ovulation period.
+- Estimated fertile window.
+- Next expected period.
+
+Clearly explain that these are estimates and cannot reliably prevent or guarantee pregnancy.
+
+C. GROWTH TRACKER
+
+Create a week-by-week pregnancy timeline.
+
+Display:
+
+- Pregnancy week.
+- General fetal development.
+- Approximate development milestones.
+- Educational illustrations.
+- Maternal wellness information.
+- Important appointment reminders.
+
+D. SYMPTOM ANALYSIS
+
+Allow users to enter symptoms.
+
+Display:
+
+- Reported symptoms.
+- General educational information.
+- Possible reasons presented cautiously.
+- Warning signs.
+- When to seek professional care.
+
+Do not diagnose pregnancy complications.
+
+---
+
+12. FEATURE 06 – BMI CALCULATOR
+
+Create an attractive interactive health calculator.
+
+INPUT
+
+- Height.
+- Weight.
+- Unit selection.
+
+Units:
+
+- Centimetres.
+- Metres.
+- Feet/inches.
+- Kilograms.
+- Pounds.
+
+CALCULATION
+
+BMI = Weight (kg) / Height (m)²
+
+RESULT
+
+Display:
+
+- BMI value.
+- BMI category.
+- Visual progress indicator.
+- BMI scale.
+- General educational interpretation.
+
+Include the limitations of BMI, especially for children, pregnancy and certain body types.
+
+Add a BMI history chart.
+
+---
+
+13. FEATURE 07 – PILL IDENTIFICATION SCANNER
+
+This should be one of the most visually impressive features.
+
+Create a futuristic AI medicine scanner interface.
+
+CAMERA SCREEN
+
+Display:
+
+- Camera preview.
+- Capture button.
+- Upload image button.
+- Flash option.
+- Scanning frame.
+- Image instructions.
+
+Instructions:
+
+"Place the tablet on a plain surface and capture a clear image."
+
+AI SCANNING ANIMATION
+
+Show:
+
+- Image processing.
+- Shape recognition.
+- Colour analysis.
+- Imprint recognition.
+- Database matching.
+
+RESULT SCREEN
+
+Display:
+
+- Possible medicine matches.
+- Tablet shape.
+- Colour.
+- Visible imprint.
+- Size information, where available.
+- Strength, if reliably identified.
+- Confidence level.
+- Supporting identification details.
+
+Allow users to compare multiple possible matches.
+
+IMPORTANT:
+
+Never claim that a pill has been definitively identified using an image alone.
+
+Require verification using packaging, imprint information and a pharmacist. If identification is uncertain, clearly display that the medicine is unidentified.
+
+---
+
+14. FEATURE 08 – SMART MEDICINE REMINDER
+
+Create a premium medication scheduling system.
+
+MAIN SCREEN
+
+Display:
+
+- Today's medicines.
+- Upcoming reminders.
+- Completed reminders.
+- Missed reminders.
+
+ADD MEDICINE
+
+Fields:
+
+- Medicine name.
+- Strength.
+- Dosage form.
+- Prescribed dose.
+- Schedule.
+- Start date.
+- End date.
+- Reminder times.
+- Prescribing professional.
+- Additional instructions.
+
+SCHEDULE OPTIONS
+
+- Once daily.
+- Twice daily.
+- Three times daily.
+- Custom schedule.
+- Specific days.
+- Custom intervals.
+
+Do not assume a schedule from the medicine name. Users should enter the prescribed schedule.
+
+REMINDER NOTIFICATIONS
+
+Create attractive notification cards.
+
+Buttons:
+
+- Mark as Taken.
+- Snooze.
+- Skip.
+
+Maintain a history of taken, skipped and missed reminders.
+
+Include an option to correct accidental entries.
+
+MEDICINE CALENDAR
+
+Display a monthly medication calendar with colour-coded statuses.
+
+---
+
+15. FEATURE 09 – MEDICINE INFORMATION LIBRARY
+
+Create a professional pharmaceutical database interface.
+
+MAIN SCREEN
+
+Search bar:
+
+"Search any medicine..."
+
+Categories:
+
+- Antibiotics.
+- Analgesics.
+- Antipyretics.
+- Antacids.
+- Antihistamines.
+- Antidiabetics.
+- Antihypertensives.
+- Antidepressants.
+- Vitamins.
+- Antifungals.
+
+MEDICINE DETAILS
+
+Every medicine page should include:
+
+1. Brand names.
+2. Generic name.
+3. Active ingredients.
+4. Composition.
+5. Drug category.
+6. Therapeutic uses.
+7. Available strengths.
+8. Dosage forms.
+9. Mechanism of action.
+10. Side effects.
+11. Contraindications.
+12. Precautions.
+13. Drug interactions.
+14. Storage information.
+15. Manufacturer information.
+16. Reference sources.
+
+Create expandable information sections.
+
+Add favourite and bookmark features.
+
+---
+
+16. FEATURE 10 – MECHANISM OF ACTION
+
+Create a futuristic scientific learning interface.
+
+Headline:
+
+"How Medicines Work"
+
+SEARCH
+
+Enter a medicine name or active ingredient.
+
+RESULT
+
+Display:
+
+- Active ingredient.
+- Drug class.
+- Molecular target.
+- Receptor interaction.
+- Enzyme involvement.
+- Pharmacological action.
+- Biological pathway.
+- Physiological effects.
+
+VISUALIZATION
+
+Use animated 3D molecular diagrams.
+
+Show:
+
+- Receptors.
+- Enzymes.
+- Molecules.
+- Cell membrane.
+- Drug-receptor interaction.
+- Biological pathways.
+
+Add two explanation modes:
+
+1. Simple Explanation.
+2. Advanced Pharmacology.
+
+The advanced mode should use accurate scientific terminology.
+
+The simple mode should explain difficult concepts in understandable language.
+
+---
+
+17. FEATURE 11 – HEALTH CONDITIONS
+
+Create a professional health education library.
+
+Categories:
+
+- Cardiovascular conditions.
+- Respiratory conditions.
+- Gastrointestinal conditions.
+- Neurological conditions.
+- Endocrine conditions.
+- Infectious diseases.
+- Skin conditions.
+- Musculoskeletal conditions.
+
+CONDITION DETAILS
+
+Display:
+
+- Definition.
+- Types.
+- Symptoms.
+- Causes.
+- Risk factors.
+- Complications.
+- Diagnostic methods.
+- General treatment information.
+- Prevention and wellness.
+- When to seek medical care.
+
+Include educational diagrams and illustrations.
+
+Do not provide definitive diagnoses based on user symptoms.
+
+---
+
+18. FEATURE 12 – DRUG CLASSES
+
+Create a pharmaceutical classification explorer.
+
+Categories:
+
+- Antibiotics.
+- Analgesics.
+- Antihypertensives.
+- Antidiabetics.
+- Antihistamines.
+- Antidepressants.
+- Anticoagulants.
+- Antifungals.
+- Antivirals.
+- Corticosteroids.
+
+CLASS DETAILS
+
+Display:
+
+- Drug class name.
+- Definition.
+- Pharmacological action.
+- Therapeutic applications.
+- Representative medicines.
+- Mechanism of action.
+- Common adverse effects.
+- Important precautions.
+
+Create interactive classification trees.
+
+Users should be able to navigate:
+
+Drug Class → Subclass → Generic Medicine → Brand Medicines.
+
+---
+
+19. FEATURE 13 – LABGUARD
+
+Create a premium medical laboratory report analysis module.
+
+Headline:
+
+"Understand Your Lab Reports"
+
+INPUT OPTIONS
+
+- Upload PDF.
+- Upload image.
+- Enter test manually.
+
+SUPPORTED TEST CATEGORIES
+
+- CBC.
+- Blood Glucose.
+- HbA1c.
+- Lipid Profile.
+- Liver Function Tests.
+- Kidney Function Tests.
+- Thyroid Profile.
+- Electrolytes.
+- Other supported laboratory tests.
+
+RESULT SCREEN
+
+Display:
+
+- Test name.
+- Patient-entered value.
+- Unit.
+- Laboratory reference range.
+- Status.
+- Explanation.
+- Possible clinical significance.
+
+VISUAL CHARTS
+
+Use:
+
+- Reference range bars.
+- Historical trend graphs.
+- Colour-coded result cards.
+- Parameter comparison.
+
+AI EXPLANATION
+
+Provide simple explanations of abnormal values.
+
+IMPORTANT:
+
+Use the reference ranges printed by the reporting laboratory whenever available.
+
+Do not diagnose diseases based on laboratory values alone.
+
+Highlight potentially urgent results and advise appropriate medical evaluation.
+
+---
+
+20. FEATURE 14 – MEDICINE CHANGE SIMULATOR
+
+Create an advanced pharmaceutical comparison simulator.
+
+Headline:
+
+"Explore Medicine Differences"
+
+INPUT
+
+Original Medicine.
+
+Alternative Medicine.
+
+COMPARISON
+
+Display:
+
+- Active ingredient.
+- Strength.
+- Dosage form.
+- Route.
+- Drug class.
+- Mechanism of action.
+- Pharmacological properties.
+- Known differences.
+- Important precautions.
+
+SIMULATION VISUALIZATION
+
+Create an interactive side-by-side comparison.
+
+Use animated molecular illustrations and comparison charts.
+
+Display:
+
+"Educational comparison only. This tool does not establish therapeutic equivalence or authorize medicine substitution."
+
+Do not calculate patient-specific dose conversions or recommend switching medications.
+
+---
+
+21. FEATURE 15 – MEDICINE EXPIRY TRACKER
+
+Create a premium digital medicine cabinet.
+
+ADD MEDICINE
+
+Fields:
+
+- Medicine name.
+- Brand.
+- Batch number.
+- Expiry date.
+- Quantity.
+- Strength.
+- Storage location.
+
+DASHBOARD
+
+Display:
+
+- Total medicines.
+- Expiring soon.
+- Expired medicines.
+- Active inventory.
+
+EXPIRY ALERTS
+
+Create notifications:
+
+- 90 days before expiry.
+- 30 days before expiry.
+- 7 days before expiry.
+- Expiry date reached.
+
+Allow users to customize reminder periods.
+
+MEDICINE CABINET
+
+Display medicine cards with:
+
+- Medicine image.
+- Name.
+- Quantity.
+- Expiry date.
+- Batch details.
+- Storage information.
+
+Clearly mark expired medicines.
+
+Never recommend consuming expired medicines.
+
+---
+
+22. FEATURE 16 – MULTILINGUAL AI PHARMACIST
+
+This is the signature feature of DRxGuard.
+
+Create an advanced AI chat interface.
+
+AI ASSISTANT SCREEN
+
+Design:
+
+- Beautiful AI avatar.
+- Animated glowing assistant icon.
+- Chat interface.
+- Voice input.
+- Text input.
+- Image upload.
+- Suggested questions.
+
+Headline:
+
+"Ask DRxGuard AI"
+
+Subtitle:
+
+"Your intelligent pharmaceutical information assistant."
+
+SUGGESTED QUESTIONS
+
+- What is this medicine used for?
+- Explain this medicine's mechanism of action.
+- What are its common side effects?
+- What is a drug interaction?
+- Explain this laboratory result.
+- What does this pharmaceutical term mean?
+
+MULTILINGUAL SUPPORT
+
+Support:
+
+- English.
+- Hindi.
+- Hinglish.
+- Kannada.
+- Telugu.
+- Tamil.
+- Bengali.
+- Marathi.
+- Gujarati.
+
+AI RESPONSE FORMAT
+
+Responses should be structured into:
+
+1. Direct Answer.
+2. Scientific Explanation.
+3. Important Precautions.
+4. Relevant Warnings.
+5. Reliable Sources.
+6. When to Consult a Professional.
+
+AI must distinguish educational information from personalized medical advice.
+
+It must not independently prescribe medicines, recommend stopping prescribed treatment or invent unsupported drug information.
+
+---
+
+23. UNIVERSAL NOTIFICATION SYSTEM
+
+Create a unified notification centre.
+
+Notification categories:
+
+- Medicine reminders.
+- Expiry alerts.
+- Saved medicine updates.
+- Report analysis updates.
+- Pregnancy reminders.
+- Health education updates.
+- AI assistant updates.
+- Account security.
+
+Design beautiful notification cards with appropriate icons and timestamps.
+
+---
+
+24. PROFILE & SETTINGS
+
+Create a complete profile management section.
+
+PROFILE
+
+- Profile photo.
+- Full name.
+- Email.
+- Mobile number.
+- Date of birth.
+- Preferred language.
+
+HEALTH PROFILE
+
+Optional information:
+
+- Height.
+- Weight.
+- Allergies.
+- Existing health conditions.
+- Emergency contact.
+
+Only collect sensitive health information with explicit user consent.
+
+SETTINGS
+
+- Language.
+- Notification preferences.
+- Theme.
+- Dark mode.
+- Privacy.
+- Data management.
+- Account security.
+- Download personal data.
+- Delete account.
+- Help and support.
+
+---
+
+25. ADMIN PANEL
+
+Create a separate secure administrative interface.
+
+Admin should have control over the platform.
+
+ADMIN DASHBOARD
+
+Display:
+
+- Total users.
+- Active users.
+- Medicine database entries.
+- AI queries.
+- Drug interaction checks.
+- Scanner requests.
+- LabGuard requests.
+- Reminder activity.
+
+MEDICINE DATABASE MANAGEMENT
+
+- Add medicine.
+- Edit medicine.
+- Update composition.
+- Manage brands.
+- Manage strengths.
+- Manage dosage forms.
+- Manage drug classes.
+- Manage side effects.
+- Manage interaction records.
+
+CONTENT MANAGEMENT
+
+- Health conditions.
+- Pharmaceutical articles.
+- Pregnancy educational content.
+- Mechanism of action.
+- Drug class information.
+
+AI MANAGEMENT
+
+- AI response monitoring.
+- Knowledge base management.
+- Source verification.
+- Feedback management.
+- Safety flag monitoring.
+
+ADMIN SECURITY
+
+- Role-based permissions.
+- Secure authentication.
+- Activity logs.
+- Database audit history.
+
+---
+
+26. ADVANCED 3D ANIMATION SYSTEM
+
+Make the app visually impressive without compromising performance.
+
+Required animations:
+
+1. Animated DRxGuard logo.
+2. 3D capsule movement.
+3. DNA helix animation.
+4. Floating molecular particles.
+5. AI assistant glowing animation.
+6. Smooth dashboard entrance.
+7. Animated feature cards.
+8. Medicine scanning animation.
+9. Lab report processing animation.
+10. BMI result animation.
+11. Interactive pregnancy timeline.
+12. Animated medicine reminder.
+13. Circular progress indicators.
+14. Success animations.
+15. Skeleton loading.
+16. Smooth page transitions.
+17. Interactive chart animations.
+
+Use subtle animations and optimise them for mobile devices.
+
+---
+
+27. DARK MODE
+
+Create a complete dark theme.
+
+Colours:
+
+Background: #081827
+
+Cards: #102A43
+
+Primary Blue: #38BDF8
+
+Text: #FFFFFF
+
+Secondary Text: #A9BDCE
+
+Accent: #21C7D9
+
+Every screen must support both light and dark modes.
+
+---
+
+28. TECHNICAL ARCHITECTURE
+
+Recommended architecture:
+
+FRONTEND:
+
+- Flutter or Kotlin.
+
+BACKEND:
+
+- Node.js / Python FastAPI.
+
+DATABASE:
+
+- PostgreSQL.
+
+AUTHENTICATION:
+
+- Firebase Authentication or secure backend authentication.
+
+STORAGE:
+
+- Secure cloud storage.
+
+NOTIFICATIONS:
+
+- Firebase Cloud Messaging.
+
+AI:
+
+- LLM API with pharmaceutical knowledge retrieval.
+
+MEDICINE DATABASE:
+
+- Verified pharmaceutical reference sources.
+
+IMAGE PROCESSING:
+
+- OCR and image recognition.
+
+CHARTS:
+
+- Interactive chart library.
+
+FILE SUPPORT:
+
+- PDF and image upload for LabGuard.
+
+API INTEGRATION:
+
+- Secure API architecture.
+
+Never expose API keys in the mobile application.
+
+---
+
+29. MEDICAL DATA ACCURACY & SAFETY
+
+This is a healthcare-related application.
+
+Accuracy and patient safety must be prioritised over visual presentation.
+
+Requirements:
+
+1. Use reliable, verified pharmaceutical information.
+2. Maintain source attribution.
+3. Display information update dates.
+4. Distinguish confirmed information from uncertain results.
+5. Do not fabricate drug interactions.
+6. Do not fabricate medicine compositions.
+7. Do not independently prescribe medicines.
+8. Do not recommend unsupervised medicine substitutions.
+9. Do not diagnose diseases from symptoms or lab reports.
+10. Provide emergency guidance for serious warning signs.
+11. Protect sensitive health information.
+12. Maintain secure access controls.
+
+Every AI-generated medical response must include relevant limitations and professional-care guidance.
+
+---
+
+30. COMPLETE INTERACTIVE PROTOTYPE REQUIREMENTS
+
+DO NOT BUILD ONLY STATIC UI SCREENS.
+
+Create a complete clickable prototype.
+
+All 16 features must have:
+
+- Dedicated screen.
+- Functional input fields.
+- Working buttons.
+- Proper navigation.
+- Sample data.
+- Result screens.
+- Loading states.
+- Empty states.
+- Error states.
+- Success states.
+- Back navigation.
+
+IMPORTANT USER JOURNEYS
+
+JOURNEY 1:
+Open App → Drug Interaction → Add Medicines → Check → View Results.
+
+JOURNEY 2:
+Open App → Side Effect Checker → Search Medicine → View Side Effects.
+
+JOURNEY 3:
+Open App → Compare Drugs → Select Two Medicines → View Comparison.
+
+JOURNEY 4:
+Open App → Pill Scanner → Upload Image → Simulated Scan → View Possible Matches.
+
+JOURNEY 5:
+Open App → Pregnancy Support → Due Date Calculator → View Timeline.
+
+JOURNEY 6:
+Open App → Medicine Reminder → Add Medicine → Schedule → Receive Simulated Notification.
+
+JOURNEY 7:
+Open App → LabGuard → Upload Sample Report → Process → View Explanation.
+
+JOURNEY 8:
+Open App → AI Pharmacist → Ask Question → Receive Structured Response.
+
+JOURNEY 9:
+Open App → Expiry Tracker → Add Medicine → Set Expiry → View Alerts.
+
+JOURNEY 10:
+Open App → Medicine Library → Search → Open Medicine Details.
+
+Maintain consistent demo data across the application.
+
+Do not display simulated data as real medical analysis.
+
+---
+
+31. FINAL DESIGN QUALITY REQUIREMENTS
+
+The final application must look like a premium international healthcare technology platform.
+
+Prioritise:
+
+- Beautiful UI.
+- Professional typography.
+- Premium 3D illustrations.
+- Smooth animations.
+- Scientific visualisation.
+- Simple navigation.
+- High-quality dashboards.
+- Consistent design.
+- Responsive layouts.
+- Medical readability.
+- Functional interactions.
+
+The application should be impressive enough to demonstrate to:
+
+- Healthcare professionals.
+- Pharmacists.
+- Medical students.
+- Pharmaceutical companies.
+- Healthcare startups.
+- Potential investors.
+
+Never leave any of the 16 modules incomplete.
+
+Do not make the home screen beautiful while leaving the internal screens basic.
+
+Every screen must receive the same level of design attention.
+
+FINAL OBJECTIVE:
+
+Build DRxGuard as an advanced AI-powered pharmaceutical intelligence and medicine information ecosystem.
+
+ONE APPLICATION.
+16 POWERFUL FEATURES.
+ONE UNIFIED MEDICAL INTELLIGENCE PLATFORM.

@@ -1,0 +1,6 @@
+{
+  "name": "DRxGuard",
+  "description": "AI-powered pharmaceutical intelligence, drug interaction checker, medicine database, pill scanner, LabGuard report analyzer, and healthcare companion platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

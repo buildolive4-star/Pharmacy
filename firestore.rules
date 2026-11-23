@@ -1,0 +1,330 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable security primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        ('email' in request.auth.token &&
+          request.auth.token.email == 'buildolive4@gmail.com' &&
+          'email_verified' in request.auth.token &&
+          request.auth.token.email_verified == true)
+      );
+    }
+
+    // --- Validation Helpers ---
+
+    function isValidUserProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+        data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100 &&
+        (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 120)) &&
+        (!('mobileNumber' in data) || data.mobileNumber == null || (data.mobileNumber is string && data.mobileNumber.size() <= 30)) &&
+        (!('dateOfBirth' in data) || data.dateOfBirth == null || (data.dateOfBirth is string && data.dateOfBirth.size() <= 30)) &&
+        data.preferredLanguage is string && data.preferredLanguage.size() >= 1 && data.preferredLanguage.size() <= 40 &&
+        (!('darkMode' in data) || data.darkMode == null || data.darkMode is bool) &&
+        data.healthConsentGranted is bool &&
+        (!('heightCm' in data) || data.heightCm == null || (data.heightCm is number && data.heightCm >= 0 && data.heightCm <= 300)) &&
+        (!('weightKg' in data) || data.weightKg == null || (data.weightKg is number && data.weightKg >= 0 && data.weightKg <= 500)) &&
+        (!('allergies' in data) || data.allergies == null || (data.allergies is string && data.allergies.size() <= 400)) &&
+        (!('conditions' in data) || data.conditions == null || (data.conditions is string && data.conditions.size() <= 400)) &&
+        (!('emergencyContact' in data) || data.emergencyContact == null || (data.emergencyContact is string && data.emergencyContact.size() <= 120)) &&
+        data.savedMedicineIds is list && data.savedMedicineIds.size() <= 100 &&
+        (data.savedMedicineIds.size() == 0 || data.savedMedicineIds[0] is string) &&
+        (!('expiryAlertDays' in data) || data.expiryAlertDays == null || (data.expiryAlertDays is int && data.expiryAlertDays >= 1 && data.expiryAlertDays <= 180));
+    }
+
+    function isValidReminder(data) {
+      return data.medicineName is string && data.medicineName.size() >= 1 && data.medicineName.size() <= 120 &&
+        (!('strength' in data) || data.strength == null || (data.strength is string && data.strength.size() <= 60)) &&
+        data.dosageForm is string && data.dosageForm.size() >= 1 && data.dosageForm.size() <= 60 &&
+        data.prescribedDose is string && data.prescribedDose.size() >= 1 && data.prescribedDose.size() <= 80 &&
+        data.scheduleType is string && data.scheduleType.size() >= 1 && data.scheduleType.size() <= 60 &&
+        data.reminderTimes is list && data.reminderTimes.size() >= 1 && data.reminderTimes.size() <= 12 &&
+        data.reminderTimes[0] is string &&
+        data.startDate is string && data.startDate.size() >= 1 && data.startDate.size() <= 30 &&
+        (!('endDate' in data) || data.endDate == null || (data.endDate is string && data.endDate.size() <= 30)) &&
+        (!('prescribingProfessional' in data) || data.prescribingProfessional == null || (data.prescribingProfessional is string && data.prescribingProfessional.size() <= 100)) &&
+        (!('instructions' in data) || data.instructions == null || (data.instructions is string && data.instructions.size() <= 300)) &&
+        data.status in ['UPCOMING', 'TAKEN', 'SNOOZED', 'SKIPPED', 'MISSED'];
+    }
+
+    function isValidCabinetMedicine(data) {
+      return data.medicineName is string && data.medicineName.size() >= 1 && data.medicineName.size() <= 120 &&
+        (!('brand' in data) || data.brand == null || (data.brand is string && data.brand.size() <= 100)) &&
+        (!('batchNumber' in data) || data.batchNumber == null || (data.batchNumber is string && data.batchNumber.size() <= 60)) &&
+        data.expiryDate is string && data.expiryDate.size() >= 4 && data.expiryDate.size() <= 30 &&
+        data.quantity is int && data.quantity >= 0 && data.quantity <= 10000 &&
+        (!('strength' in data) || data.strength == null || (data.strength is string && data.strength.size() <= 60)) &&
+        (!('storageLocation' in data) || data.storageLocation == null || (data.storageLocation is string && data.storageLocation.size() <= 100)) &&
+        data.alertDaysBefore is int && data.alertDaysBefore >= 1 && data.alertDaysBefore <= 180;
+    }
+
+    function isValidBmiEntry(data) {
+      return data.bmiValue is number && data.bmiValue >= 5 && data.bmiValue <= 120 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+        data.heightCm is number && data.heightCm >= 30 && data.heightCm <= 300 &&
+        data.weightKg is number && data.weightKg >= 2 && data.weightKg <= 500 &&
+        data.recordedDate is string && data.recordedDate.size() >= 1 && data.recordedDate.size() <= 30;
+    }
+
+    function isValidSavedReport(data) {
+      return data.reportType in ['INTERACTION', 'LABGUARD', 'SCANNER', 'PREGNANCY'] &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+        data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 2000 &&
+        data.severity is string && data.severity.size() >= 1 && data.severity.size() <= 40;
+    }
+
+    function isValidNotification(data) {
+      return data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 500 &&
+        data.read is bool;
+    }
+
+    function isValidAdminMedicine(data) {
+      return data.genericName is string && data.genericName.size() >= 1 && data.genericName.size() <= 120 &&
+        data.brandNames is list && data.brandNames.size() <= 20 &&
+        (data.brandNames.size() == 0 || data.brandNames[0] is string) &&
+        data.drugClass is string && data.drugClass.size() >= 1 && data.drugClass.size() <= 80 &&
+        data.strengths is list && data.strengths.size() <= 20 &&
+        (data.strengths.size() == 0 || data.strengths[0] is string) &&
+        data.dosageForms is list && data.dosageForms.size() <= 15 &&
+        (data.dosageForms.size() == 0 || data.dosageForms[0] is string) &&
+        data.composition is string && data.composition.size() >= 1 && data.composition.size() <= 200 &&
+        data.therapeuticUses is string && data.therapeuticUses.size() >= 1 && data.therapeuticUses.size() <= 500 &&
+        data.mechanismOfAction is string && data.mechanismOfAction.size() >= 1 && data.mechanismOfAction.size() <= 600 &&
+        data.commonSideEffects is string && data.commonSideEffects.size() >= 1 && data.commonSideEffects.size() <= 500 &&
+        data.precautions is string && data.precautions.size() >= 1 && data.precautions.size() <= 500 &&
+        data.published is bool &&
+        data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128;
+    }
+
+    // --- Collection Rules ---
+
+    match /admins/{uid} {
+      allow get: if isOwner(uid) && isValidId(uid);
+      allow list, write: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+        isValidId(userId) &&
+        incoming().keys().hasAll(['userId', 'fullName', 'preferredLanguage', 'healthConsentGranted', 'savedMedicineIds', 'createdAt', 'updatedAt']) &&
+        incoming().keys().hasOnly([
+          'userId', 'fullName', 'email', 'mobileNumber', 'dateOfBirth',
+          'preferredLanguage', 'darkMode', 'healthConsentGranted', 'heightCm',
+          'weightKg', 'allergies', 'conditions', 'emergencyContact',
+          'savedMedicineIds', 'expiryAlertDays', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidUserProfile(incoming(), userId) &&
+        isValidTimestamp(incoming().createdAt) &&
+        isValidTimestamp(incoming().updatedAt);
+
+      allow update: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        isValidTimestamp(incoming().updatedAt) &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'fullName', 'email', 'mobileNumber', 'dateOfBirth',
+            'preferredLanguage', 'darkMode', 'healthConsentGranted', 'heightCm',
+            'weightKg', 'allergies', 'conditions', 'emergencyContact',
+            'savedMedicineIds', 'expiryAlertDays', 'updatedAt'
+          ])
+        );
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Subcollection: Smart Medicine Reminders
+      match /reminders/{reminderId} {
+        allow get: if isOwner(userId) && isValidId(reminderId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(reminderId) &&
+          incoming().keys().hasAll(['medicineName', 'dosageForm', 'prescribedDose', 'scheduleType', 'reminderTimes', 'startDate', 'status', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly([
+            'medicineName', 'strength', 'dosageForm', 'prescribedDose',
+            'scheduleType', 'reminderTimes', 'startDate', 'endDate',
+            'prescribingProfessional', 'instructions', 'status', 'createdAt', 'updatedAt'
+          ]) &&
+          isValidReminder(incoming()) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt);
+
+        allow update: if isOwner(userId) &&
+          isValidId(reminderId) &&
+          isValidReminder(incoming()) &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'medicineName', 'strength', 'dosageForm', 'prescribedDose',
+              'scheduleType', 'reminderTimes', 'startDate', 'endDate',
+              'prescribingProfessional', 'instructions', 'status', 'updatedAt'
+            ])
+          );
+
+        allow delete: if isOwner(userId) && isValidId(reminderId);
+      }
+
+      // Subcollection: Digital Medicine Cabinet / Expiry Tracker
+      match /cabinet/{itemId} {
+        allow get: if isOwner(userId) && isValidId(itemId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(itemId) &&
+          incoming().keys().hasAll(['medicineName', 'expiryDate', 'quantity', 'alertDaysBefore', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly([
+            'medicineName', 'brand', 'batchNumber', 'expiryDate',
+            'quantity', 'strength', 'storageLocation', 'alertDaysBefore',
+            'createdAt', 'updatedAt'
+          ]) &&
+          isValidCabinetMedicine(incoming()) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt);
+
+        allow update: if isOwner(userId) &&
+          isValidId(itemId) &&
+          isValidCabinetMedicine(incoming()) &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'medicineName', 'brand', 'batchNumber', 'expiryDate',
+            'quantity', 'strength', 'storageLocation', 'alertDaysBefore', 'updatedAt'
+          ]);
+
+        allow delete: if isOwner(userId) && isValidId(itemId);
+      }
+
+      // Subcollection: BMI History
+      match /bmi_history/{entryId} {
+        allow get: if isOwner(userId) && isValidId(entryId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(entryId) &&
+          incoming().keys().hasAll(['bmiValue', 'category', 'heightCm', 'weightKg', 'recordedDate', 'createdAt']) &&
+          incoming().keys().hasOnly(['bmiValue', 'category', 'heightCm', 'weightKg', 'recordedDate', 'createdAt']) &&
+          isValidBmiEntry(incoming()) &&
+          isValidTimestamp(incoming().createdAt);
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+
+      // Subcollection: Saved Reports
+      match /reports/{reportId} {
+        allow get: if isOwner(userId) && isValidId(reportId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(reportId) &&
+          incoming().keys().hasAll(['reportType', 'title', 'summary', 'severity', 'createdAt']) &&
+          incoming().keys().hasOnly(['reportType', 'title', 'summary', 'severity', 'createdAt']) &&
+          isValidSavedReport(incoming()) &&
+          isValidTimestamp(incoming().createdAt);
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(reportId);
+      }
+
+      // Subcollection: Universal Notification Center
+      match /notifications/{notificationId} {
+        allow get: if isOwner(userId) && isValidId(notificationId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(notificationId) &&
+          incoming().keys().hasAll(['category', 'title', 'message', 'read', 'createdAt']) &&
+          incoming().keys().hasOnly(['category', 'title', 'message', 'read', 'createdAt']) &&
+          isValidNotification(incoming()) &&
+          isValidTimestamp(incoming().createdAt);
+
+        allow update: if isOwner(userId) &&
+          isValidId(notificationId) &&
+          isValidNotification(incoming()) &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+
+        allow delete: if isOwner(userId) && isValidId(notificationId);
+      }
+    }
+
+    // Admin-managed Pharmaceutical Catalog
+    match /admin_medicines/{medicineId} {
+      allow get: if (isSignedIn() && isValidId(medicineId) && existing().published == true) || isAdmin();
+      allow list: if (isSignedIn() && existing().published == true) || isAdmin();
+
+      allow create: if isAdmin() &&
+        isValidId(medicineId) &&
+        incoming().keys().hasAll([
+          'genericName', 'brandNames', 'drugClass', 'strengths', 'dosageForms',
+          'composition', 'therapeuticUses', 'mechanismOfAction',
+          'commonSideEffects', 'precautions', 'published', 'updatedBy',
+          'createdAt', 'updatedAt'
+        ]) &&
+        incoming().keys().hasOnly([
+          'genericName', 'brandNames', 'drugClass', 'strengths', 'dosageForms',
+          'composition', 'therapeuticUses', 'mechanismOfAction',
+          'commonSideEffects', 'precautions', 'published', 'updatedBy',
+          'createdAt', 'updatedAt'
+        ]) &&
+        incoming().updatedBy == request.auth.uid &&
+        isValidAdminMedicine(incoming()) &&
+        isValidTimestamp(incoming().createdAt) &&
+        isValidTimestamp(incoming().updatedAt);
+
+      allow update: if isAdmin() &&
+        isValidId(medicineId) &&
+        isValidAdminMedicine(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedBy == request.auth.uid &&
+        isValidTimestamp(incoming().updatedAt) &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'genericName', 'brandNames', 'drugClass', 'strengths', 'dosageForms',
+          'composition', 'therapeuticUses', 'mechanismOfAction',
+          'commonSideEffects', 'precautions', 'published', 'updatedBy', 'updatedAt'
+        ]);
+
+      allow delete: if isAdmin() && isValidId(medicineId);
+    }
+  }
+}
