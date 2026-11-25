@@ -185,6 +185,14 @@ class DRxViewModel(
                 preferredLanguage = _selectedLanguage.value
             )
         }
+        viewModelScope.launch {
+            val initialFda = OpenFdaService.fetchFeaturedLabels(limit = 20)
+            if (initialFda.isNotEmpty()) {
+                _liveMedicines.update { existing ->
+                    (existing + initialFda).distinctBy { it.id }
+                }
+            }
+        }
     }
 
     fun clearBannerMessage() {

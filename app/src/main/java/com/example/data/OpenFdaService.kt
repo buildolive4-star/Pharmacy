@@ -64,6 +64,26 @@ object OpenFdaService {
         }
     }
 
+    suspend fun fetchFeaturedLabels(limit: Int = 20): List<MedicineMonograph> = withContext(Dispatchers.IO) {
+        try {
+            val rawJson = api.searchLabels(
+                searchExpr = "_exists_:openfda.generic_name+AND+_exists_:openfda.brand_name",
+                limit = limit.coerceIn(1, 30)
+            ).use { it.string() }
+            val root = JSONObject(rawJson)
+            val results = root.optJSONArray("results") ?: return@withContext emptyList()
+            val mapped = mutableListOf<MedicineMonograph>()
+            for (i in 0 until results.length()) {
+                val item = results.optJSONObject(i) ?: continue
+                mapOpenFdaItem(item, i)?.let { mapped.add(it) }
+            }
+            mapped.distinctBy { it.genericName.lowercase() }
+        } catch (e: Exception) {
+            Log.w(FDA_TAG, "OpenFDA initial batch skipped: ${e.message}")
+            emptyList()
+        }
+    }
+
     private fun mapOpenFdaItem(item: JSONObject, index: Int): MedicineMonograph? {
         val openFda = item.optJSONObject("openfda") ?: JSONObject()
         val genericNames = jsonStringList(openFda.optJSONArray("generic_name"))

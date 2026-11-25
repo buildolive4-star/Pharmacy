@@ -59,12 +59,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -155,8 +157,16 @@ fun MedicineLibraryScreen(
         }
     }
 
+    LaunchedEffect(searchQuery) {
+        val q = searchQuery.trim()
+        if (q.length >= 3) {
+            delay(450)
+            onSearchOpenFda(q)
+        }
+    }
+
     val allMeds = remember(mergedAdminMonographs, liveMedicines) {
-        (liveMedicines + PharmaCatalog.medicines + mergedAdminMonographs).distinctBy { it.id }
+        (PharmaCatalog.medicines + mergedAdminMonographs + liveMedicines).distinctBy { it.id }
     }
 
     val filtered = remember(allMeds, searchQuery, selectedCategory, bookmarksOnly, savedMedicineIds) {
@@ -165,8 +175,7 @@ fun MedicineLibraryScreen(
             val matchesCat = selectedCategory == "All" ||
                 med.category.equals(selectedCategory, ignoreCase = true) ||
                 med.drugClass.contains(selectedCategory, ignoreCase = true) ||
-                med.id.startsWith("fda_") ||
-                med.id.startsWith("ai_")
+                (q.isNotEmpty() && (med.id.startsWith("fda_") || med.id.startsWith("ai_")))
             val matchesQuery = q.isEmpty() ||
                 med.genericName.lowercase().contains(q) ||
                 med.brandNames.any { it.lowercase().contains(q) } ||
@@ -599,12 +608,28 @@ fun MedicineDetailScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MechanismOfActionScreen(onBack: () -> Unit) {
+fun MechanismOfActionScreen(
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    onBack: () -> Unit
+) {
     var search by remember { mutableStateOf("") }
+    val allCatalog = remember(liveMedicines) {
+        (PharmaCatalog.medicines + liveMedicines).distinctBy { it.id }
+    }
     var selectedMed by remember { mutableStateOf(PharmaCatalog.medicines.first()) }
     var modeIndex by remember { mutableIntStateOf(0) } // 0 = Simple Explanation, 1 = Advanced Pharmacology
 
-    val matches = remember(search) { PharmaCatalog.searchMedicines(search) }
+    val matches = remember(search, allCatalog) {
+        val q = search.trim().lowercase()
+        if (q.isEmpty()) allCatalog
+        else allCatalog.filter { m ->
+            m.genericName.lowercase().contains(q) ||
+                m.brandNames.any { it.lowercase().contains(q) } ||
+                m.saltComposition.lowercase().contains(q) ||
+                m.drugClass.lowercase().contains(q) ||
+                m.category.lowercase().contains(q)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -632,7 +657,7 @@ fun MechanismOfActionScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("moa_search_input"),
-                    placeholder = { Text("Select a medicine (e.g., Metformin, Omeprazole)...") },
+                    placeholder = { Text("Search ${allCatalog.size}+ medicines (e.g., Telma, Pan-D, Metformin)...") },
                     leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp)
@@ -641,7 +666,7 @@ fun MechanismOfActionScreen(onBack: () -> Unit) {
 
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(matches.take(10), key = { it.id }) { med ->
+                    items(matches.take(16), key = { it.id }) { med ->
                         FilterChip(
                             selected = selectedMed.id == med.id,
                             onClick = { selectedMed = med },
@@ -1084,10 +1109,17 @@ private fun TreeNodeBox(level: String, title: String, accent: Color) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedicineChangeSimulatorScreen(onBack: () -> Unit) {
+fun MedicineChangeSimulatorScreen(
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    onBack: () -> Unit
+) {
+    val allCatalog = remember(liveMedicines) {
+        (PharmaCatalog.medicines + liveMedicines).distinctBy { it.id }
+    }
     var originalMed by remember { mutableStateOf(PharmaCatalog.medicines[3]) } // Omeprazole
     var alternativeMed by remember { mutableStateOf(PharmaCatalog.medicines[4]) } // Pantoprazole
     var pickingFor by remember { mutableStateOf<String?>(null) }
+    var pickerSearch by remember { mutableStateOf("") }
 
     val sameClass = originalMed.drugClass == alternativeMed.drugClass
     val sameSalt = originalMed.saltComposition.equals(alternativeMed.saltComposition, ignoreCase = true)
@@ -1248,36 +1280,64 @@ fun MedicineChangeSimulatorScreen(onBack: () -> Unit) {
     }
 
     if (pickingFor != null) {
+        val pickerMatches = remember(pickerSearch, allCatalog) {
+            val q = pickerSearch.trim().lowercase()
+            if (q.isEmpty()) allCatalog
+            else allCatalog.filter { m ->
+                m.genericName.lowercase().contains(q) ||
+                    m.brandNames.any { it.lowercase().contains(q) } ||
+                    m.saltComposition.lowercase().contains(q) ||
+                    m.drugClass.lowercase().contains(q)
+            }
+        }
         AlertDialog(
-            onDismissRequest = { pickingFor = null },
+            onDismissRequest = {
+                pickingFor = null
+                pickerSearch = ""
+            },
             title = { Text("Select ${if (pickingFor == "ORIGINAL") "Original" else "Alternative"} Medicine") },
             text = {
-                LazyColumn(
-                    modifier = Modifier.height(340.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(PharmaCatalog.medicines, key = { it.id }) { m ->
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    if (pickingFor == "ORIGINAL") originalMed = m else alternativeMed = m
-                                    pickingFor = null
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = pickerSearch,
+                        onValueChange = { pickerSearch = it },
+                        placeholder = { Text("Search ${allCatalog.size}+ medicines...") },
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    LazyColumn(
+                        modifier = Modifier.height(300.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(pickerMatches, key = { it.id }) { m ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        if (pickingFor == "ORIGINAL") originalMed = m else alternativeMed = m
+                                        pickingFor = null
+                                        pickerSearch = ""
+                                    }
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(m.genericName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text("${m.drugClass} • ${m.brandNames.take(2).joinToString(", ")}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(m.genericName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                Text("${m.drugClass} • ${m.brandNames.take(2).joinToString(", ")}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { pickingFor = null }) { Text("Close") }
+                TextButton(onClick = {
+                    pickingFor = null
+                    pickerSearch = ""
+                }) { Text("Close") }
             }
         )
     }

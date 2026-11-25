@@ -146,8 +146,9 @@ object PharmaCatalog {
 
     val medicineCategories = listOf(
         "All", "Antibiotics", "Analgesics", "Antipyretics", "Antacids",
-        "Antihistamines", "Antidiabetics", "Antihypertensives",
-        "Antidepressants", "Vitamins", "Antifungals", "Anticoagulants"
+        "Gastrointestinal", "Respiratory", "Antihistamines", "Antidiabetics",
+        "Antihypertensives", "Endocrine", "Neurology", "Antidepressants",
+        "Vitamins", "Antifungals", "Anticoagulants", "Topicals"
     )
 
     val medicines: List<MedicineMonograph> = listOf(
@@ -801,7 +802,7 @@ object PharmaCatalog {
             bioavailability = "<5% active systemic",
             metabolism = "Hepatic CYP3A4"
         )
-    )
+    ) + catalogMedicinesPartA + catalogMedicinesPartB + catalogMedicinesPartC
 
     val brandAlternatives: List<BrandAlternative> = listOf(
         // Paracetamol exact matches

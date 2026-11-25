@@ -498,11 +498,17 @@ private fun AuthenticatedDRxShell(
                     }
 
                     composable(DRxRoute.COMPARE_DRUGS) {
-                        CompareDrugsScreen(onBack = { navController.popBackStack() })
+                        CompareDrugsScreen(
+                            liveMedicines = liveMedicines,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
                     composable(DRxRoute.ALTERNATIVES) {
-                        MedicineAlternativesScreen(onBack = { navController.popBackStack() })
+                        MedicineAlternativesScreen(
+                            liveMedicines = liveMedicines,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
                     // --- Feature 05 & 06: Pregnancy Support & BMI ---
@@ -631,7 +637,10 @@ private fun AuthenticatedDRxShell(
                     }
 
                     composable(DRxRoute.MECHANISM) {
-                        MechanismOfActionScreen(onBack = { navController.popBackStack() })
+                        MechanismOfActionScreen(
+                            liveMedicines = liveMedicines,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
                     composable(DRxRoute.HEALTH_CONDITIONS) {
@@ -646,7 +655,10 @@ private fun AuthenticatedDRxShell(
                     }
 
                     composable(DRxRoute.CHANGE_SIMULATOR) {
-                        MedicineChangeSimulatorScreen(onBack = { navController.popBackStack() })
+                        MedicineChangeSimulatorScreen(
+                            liveMedicines = liveMedicines,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
                     // --- Supporting Modules: Notifications & Admin Console ---

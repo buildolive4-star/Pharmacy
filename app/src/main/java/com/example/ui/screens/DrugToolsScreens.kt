@@ -724,10 +724,17 @@ fun SideEffectCheckerScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun CompareDrugsScreen(onBack: () -> Unit) {
+fun CompareDrugsScreen(
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    onBack: () -> Unit
+) {
+    val allCatalog = remember(liveMedicines) {
+        (PharmaCatalog.medicines + liveMedicines).distinctBy { it.id }
+    }
     var medA by remember { mutableStateOf(PharmaCatalog.medicines[0]) } // Paracetamol
     var medB by remember { mutableStateOf(PharmaCatalog.medicines[1]) } // Ibuprofen
     var selectingSlot by remember { mutableStateOf<String?>(null) }
+    var slotSearch by remember { mutableStateOf("") }
     val ext = LocalDRxColors.current
 
     val sameIngredient = medA.activeIngredients == medB.activeIngredients
@@ -763,14 +770,20 @@ fun CompareDrugsScreen(onBack: () -> Unit) {
                         slotLabel = "MEDICINE A",
                         med = medA,
                         accent = MedicalBlue,
-                        onClick = { selectingSlot = if (selectingSlot == "A") null else "A" },
+                        onClick = {
+                            selectingSlot = if (selectingSlot == "A") null else "A"
+                            slotSearch = ""
+                        },
                         modifier = Modifier.weight(1f).testTag("compare_select_a")
                     )
                     CompareSelectorCard(
                         slotLabel = "MEDICINE B",
                         med = medB,
                         accent = MedicalTeal,
-                        onClick = { selectingSlot = if (selectingSlot == "B") null else "B" },
+                        onClick = {
+                            selectingSlot = if (selectingSlot == "B") null else "B"
+                            slotSearch = ""
+                        },
                         modifier = Modifier.weight(1f).testTag("compare_select_b")
                     )
                 }
@@ -778,21 +791,42 @@ fun CompareDrugsScreen(onBack: () -> Unit) {
 
             if (selectingSlot != null) {
                 item {
+                    val slotMatches = remember(slotSearch, allCatalog) {
+                        val q = slotSearch.trim().lowercase()
+                        if (q.isEmpty()) allCatalog.take(24)
+                        else allCatalog.filter { m ->
+                            m.genericName.lowercase().contains(q) ||
+                                m.brandNames.any { it.lowercase().contains(q) } ||
+                                m.saltComposition.lowercase().contains(q) ||
+                                m.drugClass.lowercase().contains(q)
+                        }.take(24)
+                    }
                     GlassMedicalCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(14.dp)) {
-                            Text("Choose Medicine $selectingSlot", style = MaterialTheme.typography.titleSmall)
+                            Text("Choose Medicine $selectingSlot (${allCatalog.size}+ available)", style = MaterialTheme.typography.titleSmall)
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = slotSearch,
+                                onValueChange = { slotSearch = it },
+                                placeholder = { Text("Search generic or brand (e.g., Telma, Pan-D)...") },
+                                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            )
                             Spacer(Modifier.height(8.dp))
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                PharmaCatalog.medicines.forEach { candidate ->
+                                slotMatches.forEach { candidate ->
                                     FilterChip(
                                         selected = (selectingSlot == "A" && medA.id == candidate.id) ||
                                             (selectingSlot == "B" && medB.id == candidate.id),
                                         onClick = {
                                             if (selectingSlot == "A") medA = candidate else medB = candidate
                                             selectingSlot = null
+                                            slotSearch = ""
                                         },
                                         label = { Text(candidate.genericName.substringBefore(" (")) }
                                     )
@@ -906,23 +940,71 @@ private fun CompareSelectorCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedicineAlternativesScreen(onBack: () -> Unit) {
+fun MedicineAlternativesScreen(
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    onBack: () -> Unit
+) {
+    val allCatalog = remember(liveMedicines) {
+        (PharmaCatalog.medicines + liveMedicines).distinctBy { it.id }
+    }
     var search by remember { mutableStateOf("") }
     var selectedMed by remember { mutableStateOf(PharmaCatalog.medicines.first()) }
     var formFilter by remember { mutableStateOf("All") }
     val ext = LocalDRxColors.current
 
-    val matchingMeds = remember(search) { PharmaCatalog.searchMedicines(search) }
-    val allAlternatives = remember(selectedMed, formFilter) {
-        val exact = PharmaCatalog.brandAlternatives.filter { it.genericId == selectedMed.id && it.exactMatch }
-        val similar = PharmaCatalog.brandAlternatives.filter {
+    val matchingMeds = remember(search, allCatalog) {
+        val q = search.trim().lowercase()
+        if (q.isEmpty()) allCatalog
+        else allCatalog.filter { m ->
+            m.genericName.lowercase().contains(q) ||
+                m.brandNames.any { it.lowercase().contains(q) } ||
+                m.saltComposition.lowercase().contains(q) ||
+                m.drugClass.lowercase().contains(q) ||
+                m.category.lowercase().contains(q)
+        }
+    }
+    val allAlternatives = remember(selectedMed, formFilter, allCatalog) {
+        val curatedExact = PharmaCatalog.brandAlternatives.filter { it.genericId == selectedMed.id && it.exactMatch }
+        val derivedExact = if (curatedExact.isNotEmpty()) curatedExact else {
+            selectedMed.brandNames.map { brand ->
+                com.example.data.BrandAlternative(
+                    brandName = brand,
+                    genericId = selectedMed.id,
+                    genericComposition = selectedMed.saltComposition,
+                    strength = selectedMed.strengths.firstOrNull() ?: "Standard strength",
+                    dosageForm = selectedMed.dosageForms.firstOrNull() ?: "Tablet",
+                    manufacturer = selectedMed.manufacturerInfo.ifBlank { "Licensed pharmaceutical labeler" },
+                    exactMatch = true,
+                    availableInfo = "${selectedMed.drugClass} (${selectedMed.route})",
+                    relevantDifferences = "Same active salt (${selectedMed.saltComposition}); verify exact strength & release type (IR vs SR) with pharmacist."
+                )
+            }
+        }
+        val curatedSimilar = PharmaCatalog.brandAlternatives.filter {
             (it.genericId == selectedMed.id && !it.exactMatch) ||
                 (it.genericId != selectedMed.id && PharmaCatalog.findById(it.genericId)?.category == selectedMed.category)
+        }
+        val derivedSimilar = if (curatedSimilar.isNotEmpty()) curatedSimilar else {
+            allCatalog.filter { it.id != selectedMed.id && it.category.equals(selectedMed.category, ignoreCase = true) }
+                .take(8)
+                .map { peer ->
+                    com.example.data.BrandAlternative(
+                        brandName = peer.brandNames.firstOrNull() ?: peer.genericName,
+                        genericId = peer.id,
+                        genericComposition = peer.saltComposition,
+                        strength = peer.strengths.joinToString(", "),
+                        dosageForm = peer.dosageForms.firstOrNull() ?: "Tablet",
+                        manufacturer = peer.genericName,
+                        exactMatch = false,
+                        availableInfo = peer.drugClass,
+                        relevantDifferences = "DIFFERENT active ingredient (${peer.genericName}) in same ${peer.category} category — prescriber authorization required."
+                    )
+                }
         }
         val filterFn: (com.example.data.BrandAlternative) -> Boolean = {
             formFilter == "All" || it.dosageForm.contains(formFilter, ignoreCase = true)
         }
-        exact.filter(filterFn) to similar.filter(filterFn)
+        derivedExact.filter(filterFn) to derivedSimilar.filter(filterFn)
     }
 
     Scaffold(
@@ -946,7 +1028,7 @@ fun MedicineAlternativesScreen(onBack: () -> Unit) {
                 OutlinedTextField(
                     value = search,
                     onValueChange = { search = it },
-                    placeholder = { Text("Search medicine brand or generic salt...") },
+                    placeholder = { Text("Search ${allCatalog.size}+ brands or generic salts...") },
                     leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
@@ -954,7 +1036,7 @@ fun MedicineAlternativesScreen(onBack: () -> Unit) {
                 )
                 Spacer(Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(matchingMeds.take(7)) { med ->
+                    items(matchingMeds.take(15), key = { it.id }) { med ->
                         FilterChip(
                             selected = selectedMed.id == med.id,
                             onClick = { selectedMed = med },
