@@ -192,6 +192,7 @@ fun AiPharmacistScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
@@ -347,7 +348,6 @@ fun AiPharmacistScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .imePadding()
         ) {
             // Chat History + Hero Banner + Suggestions
             LazyColumn(
@@ -358,78 +358,81 @@ fun AiPharmacistScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Hero Clinical AI Banner
-                item {
-                    Card(
-                        shape = RoundedCornerShape(24.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        border = BorderStroke(1.dp, ElectricCyan.copy(alpha = 0.45f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(ext.heroStart, ext.heroMid, ext.heroEnd)
-                                    )
-                                )
+                val showIntroBanners = messages.size <= 1
+                // Hero Clinical AI Banner (shown cleanly before conversation starts)
+                if (showIntroBanners) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(24.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            border = BorderStroke(1.dp, ElectricCyan.copy(alpha = 0.45f)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.img_hero_ai_pharmacist),
-                                contentDescription = "DRxGuard AI Pharmacist Avatar",
-                                contentScale = ContentScale.Crop,
-                                alpha = 0.24f,
-                                modifier = Modifier.matchParentSize()
-                            )
-                            AnimatedDnaHelixCanvas(
-                                modifier = Modifier.matchParentSize(),
-                                primaryColor = ElectricCyan.copy(alpha = 0.25f),
-                                secondaryColor = Color.White.copy(alpha = 0.12f)
-                            )
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(ext.heroStart, ext.heroMid, ext.heroEnd)
+                                        )
+                                    )
                             ) {
-                                DRxGuardLogoMark(size = 50.dp, glowing = true)
-                                Spacer(Modifier.width(14.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = Color.White.copy(alpha = 0.16f)
-                                    ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.img_hero_ai_pharmacist),
+                                    contentDescription = "DRxGuard AI Pharmacist Avatar",
+                                    contentScale = ContentScale.Crop,
+                                    alpha = 0.24f,
+                                    modifier = Modifier.matchParentSize()
+                                )
+                                AnimatedDnaHelixCanvas(
+                                    modifier = Modifier.matchParentSize(),
+                                    primaryColor = ElectricCyan.copy(alpha = 0.25f),
+                                    secondaryColor = Color.White.copy(alpha = 0.12f)
+                                )
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    DRxGuardLogoMark(size = 50.dp, glowing = true)
+                                    Spacer(Modifier.width(14.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = Color.White.copy(alpha = 0.16f)
+                                        ) {
+                                            Text(
+                                                text = "FAST CLINICAL AI • 9 LANGUAGES",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = ElectricCyan,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            )
+                                        }
+                                        Spacer(Modifier.height(6.dp))
                                         Text(
-                                            text = "6-SECTION CLINICAL PROTOCOL",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = ElectricCyan,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            "Evidence-Guided Pharmaceutical Assistant",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(Modifier.height(2.dp))
+                                        Text(
+                                            "Responding in $selectedLanguage • Upload strip photos or ask by voice",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.85f)
                                         )
                                     }
-                                    Spacer(Modifier.height(6.dp))
-                                    Text(
-                                        "Evidence-Guided Pharmaceutical Assistant",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        "Responding in $selectedLanguage • Upload strip photos or ask by voice",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.85f)
-                                    )
                                 }
                             }
                         }
                     }
-                }
 
-                // Educational Notice (Compact)
-                item {
-                    MedicalSafetyBanner(
-                        text = "General pharmaceutical education only — never a medical diagnosis or prescription change. Contact emergency services immediately for urgent symptoms."
-                    )
+                    // Educational Notice (Compact)
+                    item {
+                        MedicalSafetyBanner(
+                            text = "General pharmaceutical education only — never a medical diagnosis or prescription change. Contact emergency services immediately for urgent symptoms."
+                        )
+                    }
                 }
 
                 // Suggested Question Chips
@@ -967,23 +970,40 @@ private fun formatMarkdownInline(input: String): AnnotatedString {
     return buildAnnotatedString {
         var idx = 0
         while (idx < normalized.length) {
-            val startBold = normalized.indexOf("**", idx)
-            if (startBold == -1) {
+            val nextBold = normalized.indexOf("**", idx)
+            val nextItalic = normalized.indexOf("*", idx).let { pos ->
+                if (pos != -1 && (pos + 1 < normalized.length && normalized[pos + 1] == '*')) -1 else pos
+            }
+
+            if (nextBold == -1 && nextItalic == -1) {
                 append(normalized.substring(idx))
                 break
             }
-            if (startBold > idx) {
-                append(normalized.substring(idx, startBold))
+
+            val useBold = nextBold != -1 && (nextItalic == -1 || nextBold <= nextItalic)
+            if (useBold) {
+                if (nextBold > idx) append(normalized.substring(idx, nextBold))
+                val endBold = normalized.indexOf("**", nextBold + 2)
+                if (endBold == -1) {
+                    append(normalized.substring(nextBold + 2))
+                    break
+                }
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(normalized.substring(nextBold + 2, endBold))
+                }
+                idx = endBold + 2
+            } else {
+                if (nextItalic > idx) append(normalized.substring(idx, nextItalic))
+                val endItalic = normalized.indexOf("*", nextItalic + 1)
+                if (endItalic == -1) {
+                    append(normalized.substring(nextItalic + 1))
+                    break
+                }
+                withStyle(SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)) {
+                    append(normalized.substring(nextItalic + 1, endItalic))
+                }
+                idx = endItalic + 1
             }
-            val endBold = normalized.indexOf("**", startBold + 2)
-            if (endBold == -1) {
-                append(normalized.substring(startBold + 2))
-                break
-            }
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(normalized.substring(startBold + 2, endBold))
-            }
-            idx = endBold + 2
         }
     }
 }

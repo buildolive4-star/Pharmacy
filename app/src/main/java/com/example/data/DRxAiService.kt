@@ -48,23 +48,29 @@ class DRxAiService {
 
     private val pharmacistModel by lazy {
         Firebase.ai.generativeModel(
-            modelName = "gemini-3.8-flash",
+            modelName = "gemini-3.5-flash-lite",
+            generationConfig = generationConfig {
+                temperature = 0.35f
+                maxOutputTokens = 750
+            },
             systemInstruction = content {
                 text(
                     """
-                    You are DRxGuard AI, a calm, accurate, evidence-based pharmaceutical education assistant.
+                    You are DRxGuard AI, a fast, accurate, friendly pharmaceutical education assistant.
                     SAFETY RULES (MANDATORY):
                     - Clearly distinguish general educational information from personalized medical advice.
-                    - NEVER independently prescribe medications, calculate patient-specific dose conversions, or advise stopping prescribed therapy.
-                    - NEVER fabricate drug interactions, pill identities, or compositions. If uncertain, state the uncertainty clearly.
-                    - ALWAYS structure every pharmaceutical response using these exact 6 markdown headings:
+                    - NEVER prescribe medications, calculate patient-specific doses, or advise stopping prescribed therapy.
+                    - NEVER fabricate drug interactions, pill identities, or compositions. If uncertain, state uncertainty clearly.
+                    RESPONSE STYLE:
+                    - Respond strictly in the user's selected language (if Hinglish, write natural conversational Hindi in Latin/Roman script).
+                    - For casual greetings or small talk (e.g., "hi", "hello", "thanks", "kaise ho"), reply warmly in 1-2 short sentences and ask what medicine or health topic they want to check. Do NOT use the 6-section template for greetings.
+                    - For actual medicine, symptom, lab, or pharmacology questions, be crisp, concise (under 180 words total), and use these 6 short headings:
                       ### 1. Direct Answer
                       ### 2. Scientific Explanation
                       ### 3. Important Precautions
                       ### 4. Relevant Warnings
                       ### 5. Reliable Sources
                       ### 6. When to Consult a Professional
-                    - Respond strictly in the user's selected language. If Hinglish is selected, write natural Hindi in Latin/Roman script.
                     """.trimIndent()
                 )
             }
@@ -140,10 +146,23 @@ class DRxAiService {
     fun streamPharmacistResponse(
         question: String,
         language: String,
-        attachedImage: Bitmap? = null
+        attachedImage: Bitmap? = null,
+        recentTurns: List<Pair<Boolean, String>> = emptyList()
     ): Flow<String> = flow {
         val accumulated = StringBuilder()
-        val promptText = "Selected response language: $language.\nUser question: $question"
+        val historyPrefix = if (recentTurns.isNotEmpty()) {
+            buildString {
+                append("Recent conversation context:\n")
+                recentTurns.takeLast(4).forEach { (fromUser, msg) ->
+                    val role = if (fromUser) "User" else "Assistant"
+                    append("$role: ${msg.take(260)}\n")
+                }
+                append("\n")
+            }
+        } else {
+            ""
+        }
+        val promptText = "${historyPrefix}Response language: $language.\nUser message: $question"
         withTimeout(60_000L) {
             val stream = if (attachedImage != null) {
                 pharmacistModel.generateContentStream(

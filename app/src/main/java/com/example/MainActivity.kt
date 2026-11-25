@@ -7,10 +7,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Explore
@@ -21,7 +26,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -289,7 +293,9 @@ private fun AuthenticatedDRxShell(
     val bottomTabRoutes = remember { bottomTabs.map { it.route }.toSet() }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: DRxRoute.HOME
-    val showBottomBar = currentRoute in bottomTabRoutes
+    val density = LocalDensity.current
+    val isImeOpen = WindowInsets.ime.getBottom(density) > 0
+    val showBottomBar = currentRoute in bottomTabRoutes && !isImeOpen
 
     fun navigateTo(route: String) {
         scope.launch { drawerState.close() }
@@ -336,7 +342,7 @@ private fun AuthenticatedDRxShell(
         ) {
             Scaffold(
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                contentWindowInsets = WindowInsets.navigationBars,
+                contentWindowInsets = WindowInsets.safeDrawing,
                 bottomBar = {
                     if (showBottomBar) {
                         Surface(
@@ -386,6 +392,7 @@ private fun AuthenticatedDRxShell(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
+                        .consumeWindowInsets(innerPadding)
                 ) {
                     // --- 5 Primary Bottom Tabs ---
                     composable(DRxRoute.HOME) {

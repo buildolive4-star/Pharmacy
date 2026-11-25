@@ -407,11 +407,16 @@ class DRxViewModel(
     }
 
     private fun executeAiPharmacistCall(question: String, lang: String, attachedImage: Bitmap?) {
+        val recentTurns = _chatMessages.value
+            .dropLast(1)
+            .filter { it.id != "welcome_ai" && it.id != "welcome_reset" }
+            .takeLast(4)
+            .map { it.fromUser to it.text }
         viewModelScope.launch {
             _aiChatState.value = AiCallState.Loading
             var finalReply = ""
             try {
-                aiService.streamPharmacistResponse(question, lang, attachedImage).collect { partial ->
+                aiService.streamPharmacistResponse(question, lang, attachedImage, recentTurns).collect { partial ->
                     finalReply = partial
                     _aiChatState.value = AiCallState.Streaming(partial)
                 }
