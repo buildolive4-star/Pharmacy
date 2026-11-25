@@ -63,11 +63,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.data.CabinetMedicine
 import com.example.data.DRxAiService
 import com.example.data.DRxRepository
+import com.example.data.MedicineReminder
 import com.example.data.authStateFlow
 import com.example.data.configureAppCheck
 import com.example.data.signOutUser
+import com.example.notifications.ReminderAlarmScheduler
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.map
 import com.example.ui.components.ScientificLoader
@@ -254,10 +257,19 @@ private fun AuthenticatedDRxShell(
     val labAiState by viewModel.labAiState.collectAsStateWithLifecycle()
     val pregnancySymptomState by viewModel.pregnancySymptomState.collectAsStateWithLifecycle()
 
+    val liveMedicines by viewModel.liveMedicines.collectAsStateWithLifecycle()
+    val openFdaLoading by viewModel.openFdaLoading.collectAsStateWithLifecycle()
+    val lookupMedicineState by viewModel.lookupMedicineState.collectAsStateWithLifecycle()
+    val interactionAiState by viewModel.interactionAiState.collectAsStateWithLifecycle()
+
     val aiQueriesCount by viewModel.aiQueriesCount.collectAsStateWithLifecycle()
     val interactionChecksCount by viewModel.interactionChecksCount.collectAsStateWithLifecycle()
     val scannerRequestsCount by viewModel.scannerRequestsCount.collectAsStateWithLifecycle()
     val labGuardRequestsCount by viewModel.labGuardRequestsCount.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        ReminderAlarmScheduler.createNotificationChannel(context)
+    }
 
     val profile = (profileState as? UiState.Success)?.data
     val reminders = (remindersState as? UiState.Success)?.data.orEmpty()
@@ -464,6 +476,10 @@ private fun AuthenticatedDRxShell(
                     // --- Feature 01–04: Drug Tools ---
                     composable(DRxRoute.DRUG_INTERACTION) {
                         DrugInteractionScreen(
+                            liveMedicines = liveMedicines,
+                            interactionAiState = interactionAiState,
+                            onCheckInteractionsAi = { names -> viewModel.checkInteractionsWithAi(names) },
+                            onClearAiState = { viewModel.clearInteractionAiState() },
                             onBack = { navController.popBackStack() },
                             onCheckLogged = { viewModel.recordInteractionCheck() },
                             onSaveReport = { title, summary, severity ->
@@ -473,7 +489,12 @@ private fun AuthenticatedDRxShell(
                     }
 
                     composable(DRxRoute.SIDE_EFFECTS) {
-                        SideEffectCheckerScreen(onBack = { navController.popBackStack() })
+                        SideEffectCheckerScreen(
+                            liveMedicines = liveMedicines,
+                            lookupState = lookupMedicineState,
+                            onLookupMedicineAi = { q -> viewModel.lookupMedicineWithAi(q) },
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
                     composable(DRxRoute.COMPARE_DRUGS) {
@@ -511,7 +532,32 @@ private fun AuthenticatedDRxShell(
                             scanState = pillScanState,
                             onScanPill = { bmp, hint -> viewModel.scanPillWithAi(bmp, hint) },
                             onSaveReport = { title, summary, severity ->
-                                viewModel.saveReport("PILL_SCAN", title, summary, severity)
+                                viewModel.saveReport("SCANNER", title, summary, severity)
+                            },
+                            onAddToCabinet = { name, strength ->
+                                viewModel.addCabinetMedicine(
+                                    CabinetMedicine(
+                                        medicineName = name,
+                                        strength = strength,
+                                        expiryDate = "2027-12-31",
+                                        quantity = 10L,
+                                        alertDaysBefore = 30L
+                                    )
+                                )
+                            },
+                            onAddToReminder = { name, strength ->
+                                val rem = MedicineReminder(
+                                    medicineName = name,
+                                    strength = strength,
+                                    dosageForm = "Tablet",
+                                    prescribedDose = "1 tablet",
+                                    scheduleType = "Once daily",
+                                    reminderTimes = listOf("08:00"),
+                                    startDate = "2026-11-25",
+                                    instructions = "Added from Pill Scanner — verify dose with pharmacist."
+                                )
+                                ReminderAlarmScheduler.scheduleReminder(context, rem)
+                                viewModel.addReminder(rem)
                             },
                             onBack = { navController.popBackStack() }
                         )
@@ -556,6 +602,11 @@ private fun AuthenticatedDRxShell(
                         MedicineLibraryScreen(
                             savedMedicineIds = profile?.savedMedicineIds.orEmpty(),
                             adminMedicines = adminMedicines,
+                            liveMedicines = liveMedicines,
+                            openFdaLoading = openFdaLoading,
+                            lookupState = lookupMedicineState,
+                            onSearchOpenFda = { q -> viewModel.searchOpenFda(q) },
+                            onLookupMedicineAi = { q -> viewModel.lookupMedicineWithAi(q) },
                             onToggleSave = { viewModel.toggleSavedMedicine(it) },
                             onOpenDetail = { openMedicineDetail(it) },
                             onBack = { navController.popBackStack() }
@@ -570,6 +621,7 @@ private fun AuthenticatedDRxShell(
                         MedicineDetailScreen(
                             medicineId = medId,
                             adminMedicines = adminMedicines,
+                            liveMedicines = liveMedicines,
                             isSaved = medId in profile?.savedMedicineIds.orEmpty(),
                             onToggleSave = { viewModel.toggleSavedMedicine(medId) },
                             onOpenMechanism = { navigateTo(DRxRoute.MECHANISM) },

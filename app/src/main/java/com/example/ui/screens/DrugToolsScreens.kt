@@ -71,6 +71,8 @@ import com.example.data.InteractionSeverity
 import com.example.data.MedicineMonograph
 import com.example.data.PharmaCatalog
 import com.example.data.SideEffectDetail
+import com.example.ui.components.AiErrorDiagnosticCard
+import com.example.ui.components.AiTypingWaveform
 import com.example.ui.components.GlassMedicalCard
 import com.example.ui.components.MedicalSafetyBanner
 import com.example.ui.components.StatusPillBadge
@@ -81,6 +83,7 @@ import com.example.ui.theme.MedicalBlue
 import com.example.ui.theme.MedicalTeal
 import com.example.ui.theme.SuccessGreen
 import com.example.ui.theme.WarningAmber
+import com.example.viewmodel.AiCallState
 
 // =========================================================================
 // FEATURE 01 – DRUG INTERACTION CHECKER
@@ -89,6 +92,10 @@ import com.example.ui.theme.WarningAmber
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DrugInteractionScreen(
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    interactionAiState: AiCallState<List<DrugInteractionRecord>> = AiCallState.Idle,
+    onCheckInteractionsAi: (List<String>) -> Unit = {},
+    onClearAiState: () -> Unit = {},
     onBack: () -> Unit,
     onCheckLogged: () -> Unit,
     onSaveReport: (title: String, summary: String, severity: String) -> Unit
@@ -97,13 +104,34 @@ fun DrugInteractionScreen(
     val ext = LocalDRxColors.current
     var searchQuery by remember { mutableStateOf("") }
     val selectedIds = remember { mutableStateListOf("med_warfarin", "med_aspirin") }
+    val customMedicineNames = remember { mutableStateListOf<String>() }
     var selectedStrengthMap by remember { mutableStateOf(mapOf<String, String>()) }
     var checkedResults by remember { mutableStateOf<List<DrugInteractionRecord>?>(null) }
     var savedBanner by remember { mutableStateOf(false) }
 
-    val matchingMeds = remember(searchQuery, selectedIds.toList()) {
-        PharmaCatalog.searchMedicines(searchQuery).filter { it.id !in selectedIds }.take(6)
+    val combinedPool = remember(liveMedicines) {
+        (PharmaCatalog.medicines + liveMedicines).distinctBy { it.id }
     }
+
+    val matchingMeds = remember(searchQuery, selectedIds.toList(), combinedPool) {
+        val q = searchQuery.trim().lowercase()
+        combinedPool.filter { med ->
+            med.id !in selectedIds && (
+                q.isEmpty() ||
+                    med.genericName.lowercase().contains(q) ||
+                    med.brandNames.any { it.lowercase().contains(q) } ||
+                    med.saltComposition.lowercase().contains(q)
+                )
+        }.take(6)
+    }
+
+    val selectedDisplayNames = remember(selectedIds.toList(), customMedicineNames.toList(), combinedPool) {
+        val catalogNames = selectedIds.mapNotNull { id ->
+            combinedPool.firstOrNull { it.id == id }?.genericName?.substringBefore(" (")
+        }
+        catalogNames + customMedicineNames
+    }
+    val totalSelectedCount = selectedIds.size + customMedicineNames.size
 
     Scaffold(
         topBar = {
@@ -126,19 +154,19 @@ fun DrugInteractionScreen(
                 Column {
                     Text("Check Drug Interactions", style = MaterialTheme.typography.headlineMedium)
                     Text(
-                        "Understand potential interactions between multiple medicines using verified clinical monographs.",
+                        "Search or type ANY medicine or Indian/global brand name (e.g. Dolo 650, Pan-D, Warfarin) to check safety interactions.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            // Medicine Search & Quick Add
+            // Medicine Search & Quick Add (including ANY custom brand/salt)
             item {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search brand, generic, or active ingredient...") },
+                    placeholder = { Text("Type any medicine or brand name (e.g. Pan-D, Disprin)...") },
                     leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
@@ -149,6 +177,32 @@ fun DrugInteractionScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val trimmedQ = searchQuery.trim()
+                    if (trimmedQ.length >= 2 &&
+                        customMedicineNames.none { it.equals(trimmedQ, ignoreCase = true) }
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            border = BorderStroke(1.dp, MedicalTeal.copy(alpha = 0.5f)),
+                            modifier = Modifier.clickable {
+                                customMedicineNames.add(trimmedQ)
+                                searchQuery = ""
+                                checkedResults = null
+                                onClearAiState()
+                                savedBanner = false
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Rounded.Add, contentDescription = null, tint = MedicalTeal, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Add \"$trimmedQ\"", style = MaterialTheme.typography.labelMedium, color = MedicalTeal, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                     matchingMeds.forEach { med ->
                         Surface(
                             shape = CircleShape,
@@ -156,6 +210,7 @@ fun DrugInteractionScreen(
                             modifier = Modifier.clickable {
                                 selectedIds.add(med.id)
                                 checkedResults = null
+                                onClearAiState()
                                 savedBanner = false
                             }
                         ) {
@@ -175,11 +230,11 @@ fun DrugInteractionScreen(
             // Selected Medicine Cards with Strength Selector
             item {
                 Text(
-                    "Selected Medicines (${selectedIds.size})",
+                    "Selected Medicines ($totalSelectedCount)",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(Modifier.height(8.dp))
-                if (selectedIds.isEmpty()) {
+                if (totalSelectedCount == 0) {
                     GlassMedicalCard(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             "Add at least 2 medicines above to analyze potential interactions.",
@@ -191,7 +246,7 @@ fun DrugInteractionScreen(
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         selectedIds.forEach { id ->
-                            val med = PharmaCatalog.findById(id) ?: return@forEach
+                            val med = combinedPool.firstOrNull { it.id == id } ?: return@forEach
                             val activeStrength = selectedStrengthMap[id] ?: med.strengths.firstOrNull().orEmpty()
                             GlassMedicalCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(14.dp)) {
@@ -212,6 +267,7 @@ fun DrugInteractionScreen(
                                         IconButton(onClick = {
                                             selectedIds.remove(id)
                                             checkedResults = null
+                                            onClearAiState()
                                         }) {
                                             Icon(Icons.Rounded.Close, contentDescription = "Remove ${med.genericName}")
                                         }
@@ -229,6 +285,36 @@ fun DrugInteractionScreen(
                                 }
                             }
                         }
+
+                        customMedicineNames.forEach { customName ->
+                            GlassMedicalCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                borderColor = MedicalTeal.copy(alpha = 0.45f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Rounded.Medication, contentDescription = null, tint = MedicalTeal)
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(customName, style = MaterialTheme.typography.titleSmall)
+                                        Text(
+                                            "Custom / Brand entry • Analyzed via AI Clinical Screener",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MedicalTeal
+                                        )
+                                    }
+                                    IconButton(onClick = {
+                                        customMedicineNames.remove(customName)
+                                        checkedResults = null
+                                        onClearAiState()
+                                    }) {
+                                        Icon(Icons.Rounded.Close, contentDescription = "Remove $customName")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -237,11 +323,19 @@ fun DrugInteractionScreen(
             item {
                 Button(
                     onClick = {
-                        checkedResults = PharmaCatalog.checkInteractions(selectedIds)
                         savedBanner = false
-                        onCheckLogged()
+                        val localOnly = customMedicineNames.isEmpty() && selectedIds.all { PharmaCatalog.findById(it) != null }
+                        val localHits = if (localOnly) PharmaCatalog.checkInteractions(selectedIds) else emptyList()
+                        if (localHits.isNotEmpty()) {
+                            checkedResults = localHits
+                            onClearAiState()
+                            onCheckLogged()
+                        } else {
+                            checkedResults = null
+                            onCheckInteractionsAi(selectedDisplayNames)
+                        }
                     },
-                    enabled = selectedIds.size >= 2,
+                    enabled = totalSelectedCount >= 2 && interactionAiState !is AiCallState.Loading,
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -250,12 +344,47 @@ fun DrugInteractionScreen(
                 ) {
                     Icon(Icons.Rounded.WarningAmber, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Check Interactions", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        if (interactionAiState is AiCallState.Loading) "Analyzing Interactions..." else "Check Interactions",
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
 
-            // Results Section
-            checkedResults?.let { results ->
+            if (interactionAiState is AiCallState.Loading) {
+                item {
+                    GlassMedicalCard(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            AiTypingWaveform()
+                            Column {
+                                Text("Checking Clinical Interactions...", style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    "Evaluating active salts for ${selectedDisplayNames.joinToString(" + ")}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (interactionAiState is AiCallState.Error) {
+                item {
+                    AiErrorDiagnosticCard(
+                        errorMessage = interactionAiState.message,
+                        onRetry = { onCheckInteractionsAi(selectedDisplayNames) }
+                    )
+                }
+            }
+
+            // Results Section (Local Catalog or Live AI Results)
+            val displayResults = checkedResults ?: (interactionAiState as? AiCallState.Success)?.data
+            displayResults?.let { results ->
                 item {
                     if (results.isEmpty()) {
                         GlassMedicalCard(
@@ -282,10 +411,15 @@ fun DrugInteractionScreen(
                             }
                         }
                     } else {
+                        val hasActualInteraction = results.any { it.severity != InteractionSeverity.NONE }
                         Text(
-                            "${results.size} Interaction${if (results.size > 1) "s" else ""} Detected",
+                            text = if (hasActualInteraction) {
+                                "${results.size} Interaction${if (results.size > 1) "s" else ""} Detected"
+                            } else {
+                                "Interaction Screening Complete"
+                            },
                             style = MaterialTheme.typography.titleLarge,
-                            color = DangerRed
+                            color = if (hasActualInteraction) DangerRed else ext.success
                         )
                     }
                 }
@@ -318,7 +452,7 @@ fun DrugInteractionScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                "Active Ingredients: ${medA?.activeIngredients?.joinToString().orEmpty()} & ${medB?.activeIngredients?.joinToString().orEmpty()}",
+                                "Active Ingredients: ${medA?.activeIngredients?.joinToString() ?: rec.drugAId} & ${medB?.activeIngredients?.joinToString() ?: rec.drugBId}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -338,7 +472,7 @@ fun DrugInteractionScreen(
 
                 // Actions: Save, Share, Check Another
                 item {
-                    val comboTitle = selectedIds.mapNotNull { PharmaCatalog.findById(it)?.genericName?.substringBefore(" (") }.joinToString(" + ")
+                    val comboTitle = selectedDisplayNames.joinToString(" + ")
                     val topSeverity = results.firstOrNull()?.severity?.name ?: "NONE"
                     val summaryText = if (results.isEmpty()) {
                         "No known interaction matched in current catalog for $comboTitle. Verify with pharmacist."
@@ -386,7 +520,9 @@ fun DrugInteractionScreen(
                     OutlinedButton(
                         onClick = {
                             selectedIds.clear()
+                            customMedicineNames.clear()
                             checkedResults = null
+                            onClearAiState()
                             savedBanner = false
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -413,11 +549,34 @@ fun DrugInteractionScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SideEffectCheckerScreen(onBack: () -> Unit) {
+fun SideEffectCheckerScreen(
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    lookupState: AiCallState<MedicineMonograph> = AiCallState.Idle,
+    onLookupMedicineAi: (String) -> Unit = {},
+    onBack: () -> Unit
+) {
     var query by remember { mutableStateOf("") }
     var selectedMed by remember { mutableStateOf(PharmaCatalog.medicines.first()) }
     var selectedTab by remember { mutableIntStateOf(0) }
-    val searchResults = remember(query) { PharmaCatalog.searchMedicines(query) }
+
+    val combinedPool = remember(liveMedicines) {
+        (PharmaCatalog.medicines + liveMedicines).distinctBy { it.id }
+    }
+    val searchResults = remember(query, combinedPool) {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) combinedPool
+        else combinedPool.filter { med ->
+            med.genericName.lowercase().contains(q) ||
+                med.brandNames.any { it.lowercase().contains(q) } ||
+                med.saltComposition.lowercase().contains(q)
+        }
+    }
+
+    androidx.compose.runtime.LaunchedEffect(lookupState) {
+        if (lookupState is AiCallState.Success) {
+            selectedMed = lookupState.data
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -440,7 +599,7 @@ fun SideEffectCheckerScreen(onBack: () -> Unit) {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    placeholder = { Text("Search brand, generic, or active ingredient...") },
+                    placeholder = { Text("Search any medicine or brand (e.g. Dolo 650, Pan-D)...") },
                     leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
@@ -455,6 +614,27 @@ fun SideEffectCheckerScreen(onBack: () -> Unit) {
                             label = { Text(med.genericName.substringBefore(" (")) }
                         )
                     }
+                }
+                if (query.trim().length >= 2 && searchResults.isEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { onLookupMedicineAi(query.trim()) },
+                        enabled = lookupState !is AiCallState.Loading,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (lookupState is AiCallState.Loading) "Fetching \"${query.trim()}\" Side Effects..."
+                            else "Lookup \"${query.trim()}\" Side Effects with AI"
+                        )
+                    }
+                }
+                if (lookupState is AiCallState.Error) {
+                    Spacer(Modifier.height(10.dp))
+                    AiErrorDiagnosticCard(
+                        errorMessage = lookupState.message,
+                        onRetry = { if (query.isNotBlank()) onLookupMedicineAi(query.trim()) }
+                    )
                 }
             }
 

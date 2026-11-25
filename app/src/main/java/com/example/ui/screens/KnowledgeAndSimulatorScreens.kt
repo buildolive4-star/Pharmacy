@@ -77,6 +77,7 @@ import androidx.compose.ui.unit.dp
 import com.example.data.AdminMedicine
 import com.example.data.MedicineMonograph
 import com.example.data.PharmaCatalog
+import com.example.ui.components.AiErrorDiagnosticCard
 import com.example.ui.components.GlassMedicalCard
 import com.example.ui.components.MedicalSafetyBanner
 import com.example.ui.components.MolecularMechanismCanvas
@@ -90,6 +91,7 @@ import com.example.ui.theme.MedicalTeal
 import com.example.ui.theme.PremiumPurple
 import com.example.ui.theme.SuccessGreen
 import com.example.ui.theme.WarningAmber
+import com.example.viewmodel.AiCallState
 
 // =========================================================================
 // FEATURE 09: MEDICINE INFORMATION LIBRARY & 16-SECTION MONOGRAPH DETAIL
@@ -100,6 +102,11 @@ import com.example.ui.theme.WarningAmber
 fun MedicineLibraryScreen(
     savedMedicineIds: List<String>,
     adminMedicines: List<AdminMedicine>,
+    liveMedicines: List<MedicineMonograph> = emptyList(),
+    openFdaLoading: Boolean = false,
+    lookupState: AiCallState<MedicineMonograph> = AiCallState.Idle,
+    onSearchOpenFda: (String) -> Unit = {},
+    onLookupMedicineAi: (String) -> Unit = {},
     onToggleSave: (String) -> Unit,
     onOpenDetail: (String) -> Unit,
     onBack: () -> Unit
@@ -148,8 +155,8 @@ fun MedicineLibraryScreen(
         }
     }
 
-    val allMeds = remember(mergedAdminMonographs) {
-        PharmaCatalog.medicines + mergedAdminMonographs
+    val allMeds = remember(mergedAdminMonographs, liveMedicines) {
+        (liveMedicines + PharmaCatalog.medicines + mergedAdminMonographs).distinctBy { it.id }
     }
 
     val filtered = remember(allMeds, searchQuery, selectedCategory, bookmarksOnly, savedMedicineIds) {
@@ -157,7 +164,9 @@ fun MedicineLibraryScreen(
         allMeds.filter { med ->
             val matchesCat = selectedCategory == "All" ||
                 med.category.equals(selectedCategory, ignoreCase = true) ||
-                med.drugClass.contains(selectedCategory, ignoreCase = true)
+                med.drugClass.contains(selectedCategory, ignoreCase = true) ||
+                med.id.startsWith("fda_") ||
+                med.id.startsWith("ai_")
             val matchesQuery = q.isEmpty() ||
                 med.genericName.lowercase().contains(q) ||
                 med.brandNames.any { it.lowercase().contains(q) } ||
@@ -246,6 +255,56 @@ fun MedicineLibraryScreen(
                 }
             }
 
+            if (searchQuery.trim().length >= 2) {
+                item {
+                    GlassMedicalCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        borderColor = MedicalTeal.copy(alpha = 0.45f)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Global & Indian Medicine Live Search",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MedicalTeal,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Can't find \"${searchQuery.trim()}\" below? Fetch official FDA label data or generate a complete Indian/global monograph instantly.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { onSearchOpenFda(searchQuery.trim()) },
+                                    enabled = !openFdaLoading,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(if (openFdaLoading) "Searching FDA..." else "OpenFDA DB")
+                                }
+                                Button(
+                                    onClick = { onLookupMedicineAi(searchQuery.trim()) },
+                                    enabled = lookupState !is AiCallState.Loading,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(if (lookupState is AiCallState.Loading) "Fetching..." else "AI Lookup")
+                                }
+                            }
+                            if (lookupState is AiCallState.Error) {
+                                AiErrorDiagnosticCard(
+                                    errorMessage = lookupState.message,
+                                    onRetry = { onLookupMedicineAi(searchQuery.trim()) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             if (filtered.isEmpty()) {
                 item {
                     GlassMedicalCard(modifier = Modifier.fillMaxWidth()) {
@@ -255,9 +314,9 @@ fun MedicineLibraryScreen(
                         ) {
                             Icon(Icons.Rounded.Medication, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(40.dp))
                             Spacer(Modifier.height(8.dp))
-                            Text("No matching monographs found", style = MaterialTheme.typography.titleMedium)
+                            Text("No local monograph matched", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "Try clearing your search or switching category filters.",
+                                "Tap OpenFDA DB or AI Lookup above to load \"${searchQuery.ifBlank { "this medicine" }}\" live.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -330,14 +389,16 @@ fun MedicineLibraryScreen(
 fun MedicineDetailScreen(
     medicineId: String,
     adminMedicines: List<AdminMedicine>,
+    liveMedicines: List<MedicineMonograph> = emptyList(),
     isSaved: Boolean,
     onToggleSave: () -> Unit,
     onOpenMechanism: () -> Unit,
     onOpenInteractions: () -> Unit,
     onBack: () -> Unit
 ) {
-    val med = remember(medicineId, adminMedicines) {
+    val med = remember(medicineId, adminMedicines, liveMedicines) {
         PharmaCatalog.findById(medicineId)
+            ?: liveMedicines.firstOrNull { it.id == medicineId }
             ?: adminMedicines.firstOrNull { "admin_${it.id}" == medicineId }?.let { am ->
                 MedicineMonograph(
                     id = "admin_${am.id}",

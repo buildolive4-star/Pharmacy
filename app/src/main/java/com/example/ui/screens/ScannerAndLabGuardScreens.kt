@@ -72,7 +72,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
 import com.example.data.LabAiInterpretation
+import com.example.data.LabPdfHelper
 import com.example.data.PharmaCatalog
 import com.example.data.PillScanAnalysis
 import com.example.ui.components.GlassMedicalCard
@@ -92,6 +94,7 @@ import com.example.ui.theme.SuccessGreen
 import com.example.ui.theme.WarningAmber
 import com.example.viewmodel.AiCallState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // =========================================================================
 // FEATURE 07 – PILL IDENTIFICATION SCANNER
@@ -103,6 +106,8 @@ fun PillScannerScreen(
     scanState: AiCallState<PillScanAnalysis>,
     onScanPill: (Bitmap?, String) -> Unit,
     onSaveReport: (title: String, summary: String, severity: String) -> Unit,
+    onAddToCabinet: (name: String, strength: String) -> Unit = { _, _ -> },
+    onAddToReminder: (name: String, strength: String) -> Unit = { _, _ -> },
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -359,6 +364,26 @@ fun PillScannerScreen(
                                     Text("Shape: ${candidate.shape} • Color: ${candidate.color} • Size: ${candidate.sizeEstimate}", style = MaterialTheme.typography.bodySmall)
                                     Text("Imprint: ${candidate.visibleImprint}", style = MaterialTheme.typography.labelSmall)
                                     Text(candidate.supportingDetails, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { onAddToCabinet(candidate.possibleName, candidate.strength) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Save to Cabinet", style = MaterialTheme.typography.labelSmall)
+                                        }
+                                        OutlinedButton(
+                                            onClick = { onAddToReminder(candidate.possibleName, candidate.strength) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Set Reminder", style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -416,6 +441,7 @@ fun LabGuardScreen(
 ) {
     val context = LocalContext.current
     val ext = LocalDRxColors.current
+    val scope = rememberCoroutineScope()
 
     val categories = remember {
         listOf("All", "CBC", "Blood Glucose", "HbA1c", "Lipid Profile", "Liver Function", "Kidney Function", "Thyroid Profile", "Electrolytes")
@@ -423,6 +449,7 @@ fun LabGuardScreen(
     var selectedCategory by remember { mutableStateOf("All") }
     var attachedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var uploadedFileLabel by remember { mutableStateOf<String?>(null) }
+    var pdfRendering by remember { mutableStateOf(false) }
     val userValues = remember {
         mutableStateMapOf<String, String>().apply {
             PharmaCatalog.labParameters.forEach { put(it.id, it.defaultSampleValue.toString()) }
@@ -436,7 +463,7 @@ fun LabGuardScreen(
             attachedBitmap = try {
                 context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
             } catch (_: Exception) { null }
-            uploadedFileLabel = "Uploaded Lab Report Photo"
+            uploadedFileLabel = if (attachedBitmap != null) "Uploaded Lab Report Image" else "Could not decode image"
         }
     }
 
@@ -444,13 +471,35 @@ fun LabGuardScreen(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            uploadedFileLabel = "PDF Selected: ${uri.lastPathSegment ?: "LabReport.pdf"}"
+            pdfRendering = true
+            uploadedFileLabel = "Rendering PDF pages for AI..."
+            scope.launch {
+                val rendered = LabPdfHelper.renderPdfToBitmap(context, uri)
+                pdfRendering = false
+                if (rendered.bitmap != null) {
+                    attachedBitmap = rendered.bitmap
+                    uploadedFileLabel = "PDF Ready (${rendered.renderedPages} of ${rendered.pageCount} page(s))"
+                } else {
+                    uploadedFileLabel = "Could not render PDF. Try uploading a clear photo/screenshot instead."
+                }
+            }
         }
     }
 
     val visibleParams = remember(selectedCategory) {
         if (selectedCategory == "All") PharmaCatalog.labParameters
         else PharmaCatalog.labParameters.filter { it.category == selectedCategory }
+    }
+
+    fun buildLabSummaryForAi(): String {
+        return if (attachedBitmap != null) {
+            "Analyze the attached laboratory report (${uploadedFileLabel ?: "uploaded file"}). Extract all visible test names, measured values, units, and printed reference ranges directly from the document."
+        } else {
+            visibleParams.joinToString("\n") { p ->
+                val v = userValues[p.id]?.toDoubleOrNull() ?: p.defaultSampleValue
+                "${p.name}: $v ${p.unit} (Reference: ${p.refLow}–${p.refHigh} ${p.unit})"
+            }
+        }
     }
 
     Scaffold(
@@ -474,7 +523,7 @@ fun LabGuardScreen(
                 Column {
                     Text("Understand Your Lab Reports", style = MaterialTheme.typography.headlineMedium)
                     Text(
-                        "Upload a lab report image/PDF or enter markers manually to visualize reference ranges, trends, and plain-language AI insights.",
+                        "Upload a real lab report PDF or photo — or edit markers below — for plain-language AI insights.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -486,12 +535,13 @@ fun LabGuardScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
                         onClick = { pdfPicker.launch(arrayOf("application/pdf")) },
+                        enabled = !pdfRendering,
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(Icons.Rounded.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("PDF", style = MaterialTheme.typography.labelMedium)
+                        Text(if (pdfRendering) "Reading..." else "PDF", style = MaterialTheme.typography.labelMedium)
                     }
                     OutlinedButton(
                         onClick = { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
@@ -504,6 +554,7 @@ fun LabGuardScreen(
                     }
                     Button(
                         onClick = {
+                            attachedBitmap = null
                             PharmaCatalog.labParameters.forEach { userValues[it.id] = it.defaultSampleValue.toString() }
                             uploadedFileLabel = "Sample Comprehensive Lab Panel Loaded"
                         },
@@ -515,7 +566,38 @@ fun LabGuardScreen(
                 }
                 if (uploadedFileLabel != null) {
                     Spacer(Modifier.height(8.dp))
-                    StatusPillBadge(uploadedFileLabel!!, MedicalBlue, MaterialTheme.colorScheme.primaryContainer)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        StatusPillBadge(uploadedFileLabel!!, MedicalBlue, MaterialTheme.colorScheme.primaryContainer)
+                        if (attachedBitmap != null) {
+                            androidx.compose.material3.TextButton(
+                                onClick = {
+                                    attachedBitmap = null
+                                    uploadedFileLabel = null
+                                }
+                            ) {
+                                Text("Clear File")
+                            }
+                        }
+                    }
+                }
+                if (attachedBitmap != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, MedicalBlue.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth().height(170.dp)
+                    ) {
+                        Image(
+                            bitmap = attachedBitmap!!.asImageBitmap(),
+                            contentDescription = "Uploaded lab report preview",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
 
@@ -536,19 +618,18 @@ fun LabGuardScreen(
             item {
                 Button(
                     onClick = {
-                        val summary = visibleParams.joinToString("\n") { p ->
-                            val v = userValues[p.id]?.toDoubleOrNull() ?: p.defaultSampleValue
-                            "${p.name}: $v ${p.unit} (Reference: ${p.refLow}–${p.refHigh} ${p.unit})"
-                        }
-                        onAnalyzeLab(summary, attachedBitmap)
+                        onAnalyzeLab(buildLabSummaryForAi(), attachedBitmap)
                     },
-                    enabled = labAiState !is AiCallState.Loading,
+                    enabled = labAiState !is AiCallState.Loading && !pdfRendering,
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().height(52.dp).testTag("labguard_analyze_ai_button")
                 ) {
                     Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Generate AI Lab Explanation")
+                    Text(
+                        if (attachedBitmap != null) "Analyze Uploaded Report with AI"
+                        else "Generate AI Lab Explanation"
+                    )
                 }
             }
 
@@ -612,13 +693,7 @@ fun LabGuardScreen(
                 is AiCallState.Error -> item {
                     com.example.ui.components.AiErrorDiagnosticCard(
                         errorMessage = labAiState.message,
-                        onRetry = {
-                            val summary = visibleParams.joinToString("\n") { p ->
-                                val v = userValues[p.id]?.toDoubleOrNull() ?: p.defaultSampleValue
-                                "${p.name}: $v ${p.unit} (Reference: ${p.refLow}–${p.refHigh} ${p.unit})"
-                            }
-                            onAnalyzeLab(summary, attachedBitmap)
-                        }
+                        onRetry = { onAnalyzeLab(buildLabSummaryForAi(), attachedBitmap) }
                     )
                 }
                 else -> Unit

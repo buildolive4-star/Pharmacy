@@ -71,6 +71,13 @@ import com.example.data.CabinetMedicine
 import com.example.data.MedicineReminder
 import com.example.data.PharmaCatalog
 import com.example.data.SavedReport
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import com.example.notifications.ReminderAlarmScheduler
 import com.example.ui.components.GlassMedicalCard
 import com.example.ui.components.MedicalSafetyBanner
 import com.example.ui.components.StatusPillBadge
@@ -100,9 +107,26 @@ fun SmartMedicineReminderScreen(
     onSimulateNotification: (title: String, msg: String) -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val ext = LocalDRxColors.current
     var selectedTab by remember { mutableIntStateOf(0) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var hasNotifPerm by remember { mutableStateOf(ReminderAlarmScheduler.hasNotificationPermission(context)) }
+
+    val notifPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasNotifPerm = granted
+        if (granted) {
+            reminders.forEach { ReminderAlarmScheduler.scheduleReminder(context, it) }
+        }
+    }
+
+    LaunchedEffect(reminders) {
+        if (hasNotifPerm) {
+            reminders.forEach { ReminderAlarmScheduler.scheduleReminder(context, it) }
+        }
+    }
 
     val filtered = remember(reminders, selectedTab) {
         when (selectedTab) {
@@ -139,7 +163,59 @@ fun SmartMedicineReminderScreen(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Interactive Simulated Notification Preview Banner
+            item {
+                GlassMedicalCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    borderColor = (if (hasNotifPerm) SuccessGreen else WarningAmber).copy(alpha = 0.45f)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (hasNotifPerm) "Phone Alarm Notifications: ON" else "Enable Phone Reminder Alerts",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = if (hasNotifPerm) SuccessGreen else WarningAmber
+                            )
+                            Text(
+                                text = if (hasNotifPerm) "Scheduled reminders ring via Android system notifications."
+                                else "Allow notification permission so dose alarms alert you on time.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        if (!hasNotifPerm && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Button(
+                                onClick = { notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Enable")
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    val firstMed = reminders.firstOrNull()
+                                    ReminderAlarmScheduler.showMedicineNotification(
+                                        context = context,
+                                        notificationId = 9001,
+                                        medicineName = firstMed?.medicineName ?: "DRxGuard Dose Check",
+                                        dose = firstMed?.prescribedDose ?: "Reminder active",
+                                        instructions = "Phone notifications are working properly."
+                                    )
+                                },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Test Alert")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Interactive Active Reminder Card
             val nextDue = reminders.firstOrNull { it.status == "UPCOMING" || it.status == "SNOOZED" }
             if (nextDue != null) {
                 item {
@@ -278,7 +354,10 @@ fun SmartMedicineReminderScreen(
                                         }
                                     }
                                 }
-                                IconButton(onClick = { onDeleteReminder(rem.id) }) {
+                                IconButton(onClick = {
+                                    ReminderAlarmScheduler.cancelReminder(context, rem.id)
+                                    onDeleteReminder(rem.id)
+                                }) {
                                     Icon(Icons.Rounded.DeleteOutline, contentDescription = "Delete reminder", tint = DangerRed)
                                 }
                             }
@@ -334,8 +413,12 @@ fun SmartMedicineReminderScreen(
     if (showAddDialog) {
         AddReminderDialog(
             onDismiss = { showAddDialog = false },
-            onSave = {
-                onAddReminder(it)
+            onSave = { newReminder ->
+                if (!hasNotifPerm && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                ReminderAlarmScheduler.scheduleReminder(context, newReminder)
+                onAddReminder(newReminder)
                 showAddDialog = false
             }
         )

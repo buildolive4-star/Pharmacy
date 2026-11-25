@@ -10,8 +10,11 @@ import com.example.data.BmiEntry
 import com.example.data.CabinetMedicine
 import com.example.data.DRxAiService
 import com.example.data.DRxRepository
+import com.example.data.DrugInteractionRecord
 import com.example.data.LabAiInterpretation
+import com.example.data.MedicineMonograph
 import com.example.data.MedicineReminder
+import com.example.data.OpenFdaService
 import com.example.data.PharmaCatalog
 import com.example.data.PillScanAnalysis
 import com.example.data.SavedReport
@@ -147,6 +150,19 @@ class DRxViewModel(
     // --- Pregnancy Symptom AI State ---
     private val _pregnancySymptomState = MutableStateFlow<AiCallState<String>>(AiCallState.Idle)
     val pregnancySymptomState: StateFlow<AiCallState<String>> = _pregnancySymptomState.asStateFlow()
+
+    // --- Live OpenFDA & AI Medicine Cache ---
+    private val _liveMedicines = MutableStateFlow<List<MedicineMonograph>>(emptyList())
+    val liveMedicines: StateFlow<List<MedicineMonograph>> = _liveMedicines.asStateFlow()
+
+    private val _openFdaLoading = MutableStateFlow(false)
+    val openFdaLoading: StateFlow<Boolean> = _openFdaLoading.asStateFlow()
+
+    private val _lookupMedicineState = MutableStateFlow<AiCallState<MedicineMonograph>>(AiCallState.Idle)
+    val lookupMedicineState: StateFlow<AiCallState<MedicineMonograph>> = _lookupMedicineState.asStateFlow()
+
+    private val _interactionAiState = MutableStateFlow<AiCallState<List<DrugInteractionRecord>>>(AiCallState.Idle)
+    val interactionAiState: StateFlow<AiCallState<List<DrugInteractionRecord>>> = _interactionAiState.asStateFlow()
 
     // --- Admin Metrics Counter (live session + Firestore data) ---
     private val _aiQueriesCount = MutableStateFlow(12)
@@ -479,10 +495,11 @@ class DRxViewModel(
     fun analyzeLabWithAi(summaryText: String, attachedImage: Bitmap? = null) {
         _labGuardRequestsCount.update { it + 1 }
         recordToolUsed("LabGuard")
+        val lang = _selectedLanguage.value
         viewModelScope.launch {
             _labAiState.value = AiCallState.Loading
             try {
-                val interpretation = aiService.analyzeLabReport(summaryText, attachedImage)
+                val interpretation = aiService.analyzeLabReport(summaryText, attachedImage, lang)
                 _labAiState.value = AiCallState.Success(interpretation)
             } catch (e: CancellationException) {
                 throw e
@@ -491,6 +508,75 @@ class DRxViewModel(
                 _labAiState.value = AiCallState.Error(e.localizedMessage ?: "LabGuard AI analysis failed.")
             }
         }
+    }
+
+    // --- Live OpenFDA & AI Medicine Lookup ---
+
+    fun searchOpenFda(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.length < 2) return
+        viewModelScope.launch {
+            _openFdaLoading.value = true
+            try {
+                val fdaResults = OpenFdaService.searchMedicines(trimmed)
+                if (fdaResults.isNotEmpty()) {
+                    _liveMedicines.update { existing ->
+                        (fdaResults + existing).distinctBy { it.id }
+                    }
+                }
+            } finally {
+                _openFdaLoading.value = false
+            }
+        }
+    }
+
+    fun lookupMedicineWithAi(query: String, onReady: ((MedicineMonograph) -> Unit)? = null) {
+        val trimmed = query.trim()
+        if (trimmed.length < 2) return
+        val lang = _selectedLanguage.value
+        viewModelScope.launch {
+            _lookupMedicineState.value = AiCallState.Loading
+            try {
+                val monograph = aiService.lookupMedicineMonograph(trimmed, lang)
+                _liveMedicines.update { existing ->
+                    listOf(monograph) + existing.filterNot { it.id == monograph.id }
+                }
+                _lookupMedicineState.value = AiCallState.Success(monograph)
+                onReady?.invoke(monograph)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(VM_TAG, "Medicine lookup failed", e)
+                _lookupMedicineState.value = AiCallState.Error(e.localizedMessage ?: "Medicine lookup failed.")
+            }
+        }
+    }
+
+    fun resetLookupMedicineState() {
+        _lookupMedicineState.value = AiCallState.Idle
+    }
+
+    fun checkInteractionsWithAi(medicineNames: List<String>) {
+        if (medicineNames.size < 2) return
+        _interactionChecksCount.update { it + 1 }
+        recordToolUsed("Drug Interaction")
+        val lang = _selectedLanguage.value
+        viewModelScope.launch {
+            _interactionAiState.value = AiCallState.Loading
+            try {
+                val records = aiService.checkInteractionsWithAi(medicineNames, lang)
+                _interactionAiState.value = AiCallState.Success(records)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(VM_TAG, "AI interaction check failed", e)
+                _interactionAiState.value = AiCallState.Error(e.localizedMessage ?: "Interaction check failed.")
+            }
+        }
+    }
+
+    fun clearInteractionAiState() {
+        _interactionAiState.value = AiCallState.Idle
     }
 
     // --- Pregnancy Symptom AI ---

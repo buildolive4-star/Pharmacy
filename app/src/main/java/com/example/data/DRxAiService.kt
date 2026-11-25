@@ -256,18 +256,21 @@ class DRxAiService {
 
     suspend fun analyzeLabReport(
         summaryText: String,
-        attachedImage: Bitmap? = null
+        attachedImage: Bitmap? = null,
+        language: String = "English"
     ): LabAiInterpretation {
         try {
-            val prompt = """
-                Provide an educational, plain-language explanation of the following laboratory test data.
-                RULES:
-                - Prioritize the reference ranges printed by the reporting laboratory.
-                - Do NOT diagnose any disease from lab values alone.
-                - Clearly highlight any potentially urgent or significantly abnormal markers and advise timely medical evaluation.
-                Lab data:
-                $summaryText
-            """.trimIndent()
+            val prompt = buildString {
+                append("Provide an educational, plain-language explanation of this laboratory report in $language.\n")
+                append("RULES:\n")
+                append("- If an attached lab report image/PDF is present, extract and explain the actual test values, units, and printed reference ranges directly from the document.\n")
+                append("- Prioritize the reference ranges printed by the reporting laboratory.\n")
+                append("- Do NOT diagnose any disease from lab values alone.\n")
+                append("- Clearly highlight any potentially urgent or significantly abnormal markers and advise timely medical evaluation.\n")
+                if (summaryText.isNotBlank()) {
+                    append("\nAdditional notes / manual markers:\n$summaryText")
+                }
+            }
 
             val response = withTimeout(60_000L) {
                 if (attachedImage != null) {
@@ -317,6 +320,208 @@ class DRxAiService {
             throw e
         } catch (e: Exception) {
             Log.e(AI_TAG, "LabGuard AI failed", e)
+            throw e
+        }
+    }
+
+    private val monographLookupSchema = Schema.obj(
+        properties = mapOf(
+            "genericName" to Schema.string(),
+            "brandNames" to Schema.array(items = Schema.string()),
+            "activeIngredients" to Schema.array(items = Schema.string()),
+            "saltComposition" to Schema.string(),
+            "category" to Schema.string(),
+            "drugClass" to Schema.string(),
+            "therapeuticUses" to Schema.array(items = Schema.string()),
+            "strengths" to Schema.array(items = Schema.string()),
+            "dosageForms" to Schema.array(items = Schema.string()),
+            "simpleMoa" to Schema.string(),
+            "commonSideEffects" to Schema.array(items = Schema.string()),
+            "seriousSideEffects" to Schema.array(items = Schema.string()),
+            "contraindications" to Schema.array(items = Schema.string()),
+            "precautions" to Schema.array(items = Schema.string()),
+            "keyInteractions" to Schema.array(items = Schema.string()),
+            "halfLifeHours" to Schema.string()
+        )
+    )
+
+    private val monographModel by lazy {
+        Firebase.ai.generativeModel(
+            modelName = "gemini-3.5-flash-lite",
+            generationConfig = generationConfig {
+                temperature = 0.25f
+                responseMimeType = "application/json"
+                responseSchema = monographLookupSchema
+            }
+        )
+    }
+
+    suspend fun lookupMedicineMonograph(query: String, language: String = "English"): MedicineMonograph {
+        try {
+            val prompt = """
+                Provide an accurate educational pharmaceutical monograph for "$query" (support both Indian and global brand/generic names).
+                Write descriptions in $language (if Hinglish, use clear Roman Hindi + English medical terms).
+                Include exact active salts/ingredients, common brand equivalents, drug class, mechanism of action, common & serious side effects, precautions, contraindications, and key interactions.
+                Do NOT invent unknown facts or prescribe personal doses.
+            """.trimIndent()
+
+            val response = withTimeout(45_000L) {
+                monographModel.generateContent(prompt)
+            }
+            val json = JSONObject(response.text ?: throw IllegalStateException("Empty monograph response."))
+            val safeId = "ai_" + query.trim().lowercase().replace(Regex("[^a-z0-9]+"), "_").take(30)
+
+            fun arrStrings(key: String): List<String> {
+                val arr = json.optJSONArray(key) ?: return emptyList()
+                return buildList {
+                    for (i in 0 until arr.length()) {
+                        val s = arr.optString(i).trim()
+                        if (s.isNotBlank()) add(s)
+                    }
+                }
+            }
+
+            val generic = json.optString("genericName", query).ifBlank { query }
+            val commonList = arrStrings("commonSideEffects").map { name ->
+                SideEffectDetail(
+                    name = name,
+                    description = "Commonly reported with $generic; usually mild and temporary.",
+                    frequency = "Common",
+                    severity = "Low",
+                    warning = "Consult a healthcare provider if persistent or bothersome.",
+                    source = "DRxGuard AI Reference"
+                )
+            }
+            val seriousList = arrStrings("seriousSideEffects").map { name ->
+                SideEffectDetail(
+                    name = name,
+                    description = "Potential serious reaction requiring prompt medical review.",
+                    frequency = "Less Common / Serious",
+                    severity = "High",
+                    warning = "Seek urgent medical attention if these symptoms develop.",
+                    source = "DRxGuard AI Reference"
+                )
+            }
+
+            return MedicineMonograph(
+                id = safeId,
+                genericName = generic,
+                brandNames = arrStrings("brandNames").ifEmpty { listOf(query) },
+                activeIngredients = arrStrings("activeIngredients").ifEmpty { listOf(generic) },
+                saltComposition = json.optString("saltComposition", generic),
+                category = json.optString("category", "General").ifBlank { "General" },
+                drugClass = json.optString("drugClass", "Pharmaceutical Agent"),
+                subclass = "AI & Pharmacopoeia Lookup",
+                therapeuticUses = arrStrings("therapeuticUses").ifEmpty { listOf("Educational pharmaceutical reference.") },
+                strengths = arrStrings("strengths").ifEmpty { listOf("Verify on packaging") },
+                dosageForms = arrStrings("dosageForms").ifEmpty { listOf("Tablet") },
+                route = "As labeled on product packaging",
+                simpleMoa = json.optString("simpleMoa", "Consult prescribing information."),
+                advancedMoa = json.optString("simpleMoa", "Consult prescribing information."),
+                molecularTarget = "Pharmacological target per monograph",
+                receptorInteraction = "See mechanism summary",
+                enzymeInvolvement = "Hepatic / Renal per label",
+                biologicalPathway = "Systemic pathway",
+                physiologicalEffects = arrStrings("therapeuticUses").joinToString(", ").ifBlank { "See uses." },
+                commonSideEffects = commonList,
+                seriousSideEffects = seriousList,
+                rareSideEffects = emptyList(),
+                contraindications = arrStrings("contraindications").ifEmpty { listOf("Hypersensitivity to active salt.") },
+                precautions = arrStrings("precautions").ifEmpty { listOf("Verify dose with a licensed pharmacist or doctor.") },
+                keyInteractions = arrStrings("keyInteractions").ifEmpty { listOf("Run Drug Interaction Checker before combining.") },
+                storageInfo = "Store below 25°C away from moisture and children.",
+                manufacturerInfo = "Multiple licensed manufacturers (Verify pack label)",
+                referenceSources = "DRxGuard AI Clinical Synthesis (FDA / Pharmacopoeia Reference)",
+                lastUpdated = "Live Lookup",
+                halfLifeHours = json.optString("halfLifeHours", "Per label"),
+                bioavailability = "Per formulation",
+                metabolism = "Per monograph"
+            )
+        } catch (e: TimeoutCancellationException) {
+            throw IllegalStateException("Medicine lookup timed out. Please retry.")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(AI_TAG, "Medicine monograph lookup failed", e)
+            throw e
+        }
+    }
+
+    private val interactionSchema = Schema.obj(
+        properties = mapOf(
+            "interactions" to Schema.array(
+                items = Schema.obj(
+                    properties = mapOf(
+                        "drugA" to Schema.string(),
+                        "drugB" to Schema.string(),
+                        "severity" to Schema.enumeration(listOf("HIGH", "MODERATE", "LOW", "NONE")),
+                        "description" to Schema.string(),
+                        "clinicalEffects" to Schema.string(),
+                        "precautions" to Schema.string()
+                    )
+                )
+            )
+        )
+    )
+
+    private val interactionModel by lazy {
+        Firebase.ai.generativeModel(
+            modelName = "gemini-3.5-flash-lite",
+            generationConfig = generationConfig {
+                temperature = 0.2f
+                responseMimeType = "application/json"
+                responseSchema = interactionSchema
+            }
+        )
+    }
+
+    suspend fun checkInteractionsWithAi(
+        medicineNames: List<String>,
+        language: String = "English"
+    ): List<DrugInteractionRecord> {
+        try {
+            val prompt = """
+                Check potential pharmacological drug-drug interactions among these medicines (resolve Indian and global brand names to active salts first):
+                ${medicineNames.joinToString(", ")}
+                Write descriptions, clinicalEffects, and precautions clearly in $language.
+                Return pairs that have clinically relevant interactions (HIGH, MODERATE, LOW). If no clinically meaningful interaction exists between the given medicines, return a single entry with severity=NONE explaining that no major interaction is documented while advising pharmacist verification.
+            """.trimIndent()
+
+            val response = withTimeout(45_000L) {
+                interactionModel.generateContent(prompt)
+            }
+            val json = JSONObject(response.text ?: throw IllegalStateException("Empty interaction response."))
+            val arr = json.optJSONArray("interactions") ?: return emptyList()
+            val results = mutableListOf<DrugInteractionRecord>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val sev = when (obj.optString("severity", "NONE").uppercase()) {
+                    "HIGH" -> InteractionSeverity.HIGH
+                    "MODERATE" -> InteractionSeverity.MODERATE
+                    "LOW" -> InteractionSeverity.LOW
+                    else -> InteractionSeverity.NONE
+                }
+                results.add(
+                    DrugInteractionRecord(
+                        drugAId = obj.optString("drugA", medicineNames.firstOrNull().orEmpty()),
+                        drugBId = obj.optString("drugB", medicineNames.lastOrNull().orEmpty()),
+                        severity = sev,
+                        description = obj.optString("description", ""),
+                        clinicalEffects = obj.optString("clinicalEffects", "Monitor for adverse reactions."),
+                        supportingEvidence = "Pharmacological & clinical reference screening",
+                        precautions = obj.optString("precautions", "Verify with your doctor or licensed pharmacist before combining."),
+                        source = "DRxGuard AI Interaction Analyzer",
+                        lastUpdated = "Live Check"
+                    )
+                )
+            }
+            return results
+        } catch (e: TimeoutCancellationException) {
+            throw IllegalStateException("Interaction check timed out. Please retry.")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(AI_TAG, "AI interaction check failed", e)
             throw e
         }
     }
