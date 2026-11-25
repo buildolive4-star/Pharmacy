@@ -396,7 +396,10 @@ fun PregnancySupportScreen(
                             }
                         }
                         is AiCallState.Error -> item {
-                            MedicalSafetyBanner(symptomAiState.message, isUrgent = true)
+                            com.example.ui.components.AiErrorDiagnosticCard(
+                                errorMessage = symptomAiState.message,
+                                onRetry = { onAnalyzeSymptoms(symptomsText, pregWeeks) }
+                            )
                         }
                         else -> Unit
                     }

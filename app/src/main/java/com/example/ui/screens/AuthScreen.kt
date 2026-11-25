@@ -111,15 +111,24 @@ fun AuthScreen(
             // Premium Hero Header
             Surface(
                 shape = RoundedCornerShape(28.dp),
+                shadowElevation = 6.dp,
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, ElectricCyan.copy(alpha = 0.5f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Box(
                     modifier = Modifier
                         .background(Brush.linearGradient(listOf(DeepNavy, MedicalBlue, ElectricCyan)))
-                        .padding(24.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        DRxGuardLogoMark(size = 64.dp, glowing = true)
+                    com.example.ui.components.AnimatedDnaHelixCanvas(
+                        modifier = Modifier.matchParentSize(),
+                        primaryColor = ElectricCyan.copy(alpha = 0.28f),
+                        secondaryColor = Color.White.copy(alpha = 0.16f)
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().padding(24.dp)
+                    ) {
+                        DRxGuardLogoMark(size = 66.dp, glowing = true)
                         Spacer(Modifier.height(14.dp))
                         Text(
                             text = "DRxGuard",
@@ -130,7 +139,7 @@ fun AuthScreen(
                         Text(
                             text = "Smarter Medicine. Safer Decisions.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = Color.White.copy(alpha = 0.92f)
                         )
                     }
                 }

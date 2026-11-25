@@ -628,6 +628,66 @@ fun ProfileAndSettingsScreen(
             }
         }
 
+        // App Check & Cloud Security Diagnostics (for physical-device debug APKs)
+        item {
+            var appCheckDiag by remember {
+                mutableStateOf(com.example.data.readAppCheckDiagnostics(context))
+            }
+            GlassMedicalCard(
+                modifier = Modifier.fillMaxWidth(),
+                borderColor = ElectricCyan.copy(alpha = 0.35f)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.VerifiedUser, contentDescription = null, tint = MedicalTeal)
+                        Spacer(Modifier.width(8.dp))
+                        Text("App Check & AI Attestation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = "Provider: ${appCheckDiag.providerName} • Source: ${appCheckDiag.tokenSource}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (appCheckDiag.isDebugBuild) {
+                        val uuid = appCheckDiag.debugTokenUuid
+                        if (!uuid.isNullOrBlank()) {
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = uuid,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                com.example.data.refreshAppCheckDebugToken(context) { updated ->
+                                    appCheckDiag = updated
+                                    val tok = updated.debugTokenUuid
+                                    if (!tok.isNullOrBlank()) {
+                                        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                        cm.setPrimaryClip(android.content.ClipData.newPlainText("App Check Debug Token", tok))
+                                        android.widget.Toast.makeText(context, "App Check Debug UUID copied!", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        android.widget.Toast.makeText(context, "Token pending — open AI Chat once first.", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("profile_copy_appcheck_token")
+                        ) {
+                            Text(if (uuid != null) "Copy Device App Check Debug UUID" else "Fetch & Copy App Check Debug UUID")
+                        }
+                    }
+                }
+            }
+        }
+
         // Account Danger Zone & Logout
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

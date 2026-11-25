@@ -35,7 +35,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -639,7 +643,7 @@ fun TrendSparklineChart(
 @Composable
 fun GlassMedicalCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = LocalDRxColors.current.glassSurface,
     borderColor: Color = LocalDRxColors.current.glassBorder,
     content: @Composable () -> Unit
 ) {
@@ -648,7 +652,7 @@ fun GlassMedicalCard(
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = BorderStroke(1.dp, borderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         content()
     }
@@ -669,20 +673,28 @@ fun MedicalSafetyBanner(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         color = bg,
-        border = BorderStroke(1.dp, fg.copy(alpha = 0.4f))
+        border = BorderStroke(1.dp, fg.copy(alpha = 0.35f))
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.Top
         ) {
-            Icon(
-                imageVector = if (isUrgent) Icons.Rounded.WarningAmber else Icons.Rounded.Shield,
-                contentDescription = "Medical safety notice",
-                tint = fg,
-                modifier = Modifier.size(20.dp).padding(top = 2.dp)
-            )
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = fg.copy(alpha = 0.16f),
+                modifier = Modifier.size(30.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = if (isUrgent) Icons.Rounded.WarningAmber else Icons.Rounded.Shield,
+                        contentDescription = "Medical safety notice",
+                        tint = fg,
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+            }
             Spacer(Modifier.width(10.dp))
             Text(
                 text = text,
@@ -726,7 +738,7 @@ fun StatusPillBadge(
         modifier = modifier,
         shape = CircleShape,
         color = backgroundColor,
-        border = BorderStroke(1.dp, color.copy(alpha = 0.35f))
+        border = BorderStroke(1.dp, color.copy(alpha = 0.32f))
     ) {
         Text(
             text = label,
@@ -746,7 +758,7 @@ fun SuccessConfirmationBanner(message: String, modifier: Modifier = Modifier) {
     val ext = LocalDRxColors.current
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         color = ext.successContainer,
         border = BorderStroke(1.dp, ext.success.copy(alpha = 0.4f))
     ) {
@@ -760,3 +772,205 @@ fun SuccessConfirmationBanner(message: String, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/**
+ * 14. Animated AI Thinking / Streaming Waveform Bars
+ */
+@Composable
+fun AiTypingWaveform(
+    modifier: Modifier = Modifier,
+    color: Color = ElectricCyan
+) {
+    val infinite = rememberInfiniteTransition(label = "ai_wave")
+    val barScales = (0..3).map { index ->
+        infinite.animateFloat(
+            initialValue = 0.3f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 520, delayMillis = index * 110, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "wave_$index"
+        )
+    }
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        barScales.forEach { state ->
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height((18f * state.value).dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+        }
+    }
+}
+
+/**
+ * 15. Clinical AI Error Diagnostic & App Check Recovery Card
+ */
+@Composable
+fun AiErrorDiagnosticCard(
+    errorMessage: String,
+    onRetry: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val ext = LocalDRxColors.current
+    val isAppCheckIssue = com.example.data.isAppCheckErrorMessage(errorMessage)
+    var diagnostics by remember {
+        mutableStateOf(com.example.data.readAppCheckDiagnostics(context))
+    }
+
+    LaunchedEffect(isAppCheckIssue) {
+        if (isAppCheckIssue && diagnostics.debugTokenUuid == null) {
+            com.example.data.refreshAppCheckDebugToken(context) { updated ->
+                diagnostics = updated
+            }
+        }
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = ext.dangerContainer,
+        border = BorderStroke(1.dp, ext.danger.copy(alpha = 0.45f))
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.Top) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = ext.danger.copy(alpha = 0.16f),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.WarningAmber,
+                            contentDescription = "AI Error",
+                            tint = ext.danger,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isAppCheckIssue) "App Check Verification Needed" else "Unable to Reach DRxGuard AI",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = ext.danger,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            if (isAppCheckIssue) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Physical Phone Debug Setup (1-Time Fix)",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Debug APKs installed outside AI Studio generate a local App Check UUID that must be allow-listed once in Firebase Console -> App Check -> Apps -> DRxGuard -> Manage debug tokens.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        val uuid = diagnostics.debugTokenUuid
+                        if (!uuid.isNullOrBlank()) {
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = uuid,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "Debug token status: ${diagnostics.tokenSource}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            androidx.compose.material3.OutlinedButton(
+                                onClick = {
+                                    com.example.data.refreshAppCheckDebugToken(context) { updated ->
+                                        diagnostics = updated
+                                        val tokenToCopy = updated.debugTokenUuid
+                                        if (!tokenToCopy.isNullOrBlank()) {
+                                            val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                            cm.setPrimaryClip(android.content.ClipData.newPlainText("App Check Debug Token", tokenToCopy))
+                                            android.widget.Toast.makeText(context, "Debug token UUID copied!", android.widget.Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            android.widget.Toast.makeText(context, "Could not read debug token yet.", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = if (diagnostics.debugTokenUuid != null) "Copy Debug UUID" else "Fetch & Copy UUID",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                            if (onRetry != null) {
+                                androidx.compose.material3.Button(
+                                    onClick = onRetry,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Retry AI", style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (onRetry != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    androidx.compose.material3.Button(
+                        onClick = onRetry,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Retry Request", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+

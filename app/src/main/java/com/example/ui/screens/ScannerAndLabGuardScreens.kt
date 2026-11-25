@@ -382,7 +382,12 @@ fun PillScannerScreen(
                     }
                 }
                 is AiCallState.Error -> item {
-                    MedicalSafetyBanner(scanState.message, isUrgent = true)
+                    com.example.ui.components.AiErrorDiagnosticCard(
+                        errorMessage = scanState.message,
+                        onRetry = {
+                            onScanPill(selectedBitmap, imprintHint.ifBlank { "White oblong tablet with DOLO 650 imprint" })
+                        }
+                    )
                 }
                 else -> Unit
             }
@@ -605,7 +610,16 @@ fun LabGuardScreen(
                     }
                 }
                 is AiCallState.Error -> item {
-                    MedicalSafetyBanner(labAiState.message, isUrgent = true)
+                    com.example.ui.components.AiErrorDiagnosticCard(
+                        errorMessage = labAiState.message,
+                        onRetry = {
+                            val summary = visibleParams.joinToString("\n") { p ->
+                                val v = userValues[p.id]?.toDoubleOrNull() ?: p.defaultSampleValue
+                                "${p.name}: $v ${p.unit} (Reference: ${p.refLow}–${p.refHigh} ${p.unit})"
+                            }
+                            onAnalyzeLab(summary, attachedBitmap)
+                        }
+                    )
                 }
                 else -> Unit
             }

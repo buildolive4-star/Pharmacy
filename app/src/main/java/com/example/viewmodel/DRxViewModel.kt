@@ -133,6 +133,9 @@ class DRxViewModel(
     private val _aiChatState = MutableStateFlow<AiCallState<String>>(AiCallState.Idle)
     val aiChatState: StateFlow<AiCallState<String>> = _aiChatState.asStateFlow()
 
+    private var lastAiQuestion: String? = null
+    private var lastAiImage: Bitmap? = null
+
     // --- Pill Scanner AI State ---
     private val _pillScanState = MutableStateFlow<AiCallState<PillScanAnalysis>>(AiCallState.Idle)
     val pillScanState: StateFlow<AiCallState<PillScanAnalysis>> = _pillScanState.asStateFlow()
@@ -381,6 +384,9 @@ class DRxViewModel(
         if (trimmed.isEmpty() && attachedImage == null) return
         val lang = _selectedLanguage.value
         val displayQ = trimmed.ifEmpty { "Please provide educational information about this uploaded medicine image." }
+        lastAiQuestion = displayQ
+        lastAiImage = attachedImage
+
         val userMsg = ChatMessage(
             id = "u_${System.currentTimeMillis()}",
             fromUser = true,
@@ -392,11 +398,20 @@ class DRxViewModel(
         _aiQueriesCount.update { it + 1 }
         recordToolUsed("AI Pharmacist")
 
+        executeAiPharmacistCall(displayQ, lang, attachedImage)
+    }
+
+    fun retryLastAiQuestion() {
+        val q = lastAiQuestion ?: return
+        executeAiPharmacistCall(q, _selectedLanguage.value, lastAiImage)
+    }
+
+    private fun executeAiPharmacistCall(question: String, lang: String, attachedImage: Bitmap?) {
         viewModelScope.launch {
             _aiChatState.value = AiCallState.Loading
             var finalReply = ""
             try {
-                aiService.streamPharmacistResponse(displayQ, lang, attachedImage).collect { partial ->
+                aiService.streamPharmacistResponse(question, lang, attachedImage).collect { partial ->
                     finalReply = partial
                     _aiChatState.value = AiCallState.Streaming(partial)
                 }
@@ -419,6 +434,8 @@ class DRxViewModel(
     }
 
     fun clearAiChat() {
+        lastAiQuestion = null
+        lastAiImage = null
         _chatMessages.value = listOf(
             ChatMessage(
                 id = "welcome_reset",

@@ -21,8 +21,11 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -336,19 +339,42 @@ private fun AuthenticatedDRxShell(
                 contentWindowInsets = WindowInsets.navigationBars,
                 bottomBar = {
                     if (showBottomBar) {
-                        NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            windowInsets = WindowInsets.navigationBars
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 3.dp,
+                            shadowElevation = 8.dp
                         ) {
-                            bottomTabs.forEach { tab ->
-                                val selected = currentRoute == tab.route
-                                NavigationBarItem(
-                                    selected = selected,
-                                    onClick = { navigateTo(tab.route) },
-                                    icon = { Icon(tab.icon, contentDescription = tab.label) },
-                                    label = { Text(tab.label, maxLines = 1) },
-                                    modifier = Modifier.testTag("bottom_tab_${tab.route}")
-                                )
+                            Column {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
+                                NavigationBar(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    tonalElevation = 0.dp,
+                                    windowInsets = WindowInsets.navigationBars
+                                ) {
+                                    bottomTabs.forEach { tab ->
+                                        val selected = currentRoute == tab.route
+                                        NavigationBarItem(
+                                            selected = selected,
+                                            onClick = { navigateTo(tab.route) },
+                                            icon = { Icon(tab.icon, contentDescription = tab.label) },
+                                            label = {
+                                                Text(
+                                                    text = tab.label,
+                                                    maxLines = 1,
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            },
+                                            colors = NavigationBarItemDefaults.colors(
+                                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                            ),
+                                            modifier = Modifier.testTag("bottom_tab_${tab.route}")
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -387,7 +413,8 @@ private fun AuthenticatedDRxShell(
                             aiState = aiChatState,
                             onSelectLanguage = { viewModel.setLanguage(it) },
                             onSendQuestion = { q, bmp -> viewModel.askAiPharmacist(q, bmp) },
-                            onClearChat = { viewModel.clearAiChat() }
+                            onClearChat = { viewModel.clearAiChat() },
+                            onRetry = { viewModel.retryLastAiQuestion() }
                         )
                     }
 

@@ -105,6 +105,7 @@ import com.example.data.CabinetMedicine
 import com.example.data.MedicineReminder
 import com.example.data.PharmaCatalog
 import com.example.data.UserProfile
+import com.example.ui.components.AnimatedDnaHelixCanvas
 import com.example.ui.components.DRxGuardLogoMark
 import com.example.ui.components.GlassMedicalCard
 import com.example.ui.components.StatusPillBadge
@@ -216,58 +217,87 @@ fun HomeDashboardScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = onOpenDrawer,
-                    modifier = Modifier.testTag("hamburger_menu_button")
+                Surface(
+                    shape = CircleShape,
+                    color = ext.glassSurface,
+                    border = BorderStroke(1.dp, ext.glassBorder),
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.size(44.dp)
                 ) {
-                    Icon(
-                        Icons.Rounded.Menu,
-                        contentDescription = "Open navigation drawer",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    DRxGuardLogoMark(size = 30.dp, glowing = false)
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "DRxGuard",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
-                        onClick = { onNavigate(DRxRoute.NOTIFICATIONS) },
-                        modifier = Modifier.testTag("notifications_bell_button")
+                        onClick = onOpenDrawer,
+                        modifier = Modifier.testTag("hamburger_menu_button")
                     ) {
-                        BadgedBox(
-                            badge = {
-                                if (unreadCount > 0) {
-                                    Badge { Text(unreadCount.coerceAtMost(9).toString()) }
-                                }
-                            }
+                        Icon(
+                            Icons.Rounded.Menu,
+                            contentDescription = "Open navigation drawer",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = ext.glassSurface,
+                    border = BorderStroke(1.dp, ext.glassBorder),
+                    shadowElevation = 2.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        DRxGuardLogoMark(size = 26.dp, glowing = true)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "DRxGuard",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        shape = CircleShape,
+                        color = ext.glassSurface,
+                        border = BorderStroke(1.dp, ext.glassBorder),
+                        shadowElevation = 2.dp,
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        IconButton(
+                            onClick = { onNavigate(DRxRoute.NOTIFICATIONS) },
+                            modifier = Modifier.testTag("notifications_bell_button")
                         ) {
-                            Icon(
-                                Icons.Rounded.Notifications,
-                                contentDescription = "Notifications",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
+                            BadgedBox(
+                                badge = {
+                                    if (unreadCount > 0) {
+                                        Badge { Text(unreadCount.coerceAtMost(9).toString()) }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Notifications,
+                                    contentDescription = "Notifications",
+                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.size(21.dp)
+                                )
+                            }
                         }
                     }
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+                        color = Color.Transparent,
+                        border = BorderStroke(2.dp, ElectricCyan.copy(alpha = 0.7f)),
+                        shadowElevation = 3.dp,
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(MedicalBlue, MedicalTeal)), CircleShape)
                             .clickable { onNavigate(DRxRoute.PROFILE) }
                             .testTag("profile_avatar_button")
                     ) {
@@ -280,8 +310,8 @@ fun HomeDashboardScreen(
                                 .ifBlank { "DR" }
                             Text(
                                 text = initials,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -293,22 +323,31 @@ fun HomeDashboardScreen(
         // 2. GREETING SECTION
         item {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.22f))
+                ) {
+                    Text(
+                        text = todayText.uppercase(Locale.getDefault()),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
                 Text(
                     text = greeting,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Welcome to DRxGuard${profile?.fullName?.let { ", ${it.substringBefore(" ")}" }.orEmpty()}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = todayText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Welcome back${profile?.fullName?.let { ", ${it.substringBefore(" ")}" }.orEmpty()} • 16 Clinical Tools Ready",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -321,7 +360,7 @@ fun HomeDashboardScreen(
                     .padding(horizontal = 20.dp)
                     .clickable { onNavigate(DRxRoute.MEDICINE_LIBRARY) }
                     .testTag("home_ai_search_bar"),
-                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
             ) {
                 Row(
                     modifier = Modifier
@@ -329,14 +368,23 @@ fun HomeDashboardScreen(
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Rounded.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Rounded.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "Search medicines, symptoms, drug interactions...",
+                        text = "Search medicines, interactions, labs...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -365,22 +413,21 @@ fun HomeDashboardScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
+                    Spacer(Modifier.width(4.dp))
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(MedicalBlue, ElectricCyan)), CircleShape)
                             .clickable { onNavigate(DRxRoute.AI_PHARMACIST) }
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Rounded.AutoAwesome,
-                                contentDescription = "Ask AI shortcut",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        Icon(
+                            Icons.Rounded.AutoAwesome,
+                            contentDescription = "Ask AI shortcut",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
@@ -389,9 +436,9 @@ fun HomeDashboardScreen(
         // 4. HERO AI CARD
         item {
             Card(
-                shape = RoundedCornerShape(26.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                border = BorderStroke(1.5.dp, ElectricCyan.copy(alpha = glowPulse * 0.8f)),
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                border = BorderStroke(1.5.dp, ElectricCyan.copy(alpha = glowPulse * 0.78f)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
@@ -399,22 +446,28 @@ fun HomeDashboardScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Brush.linearGradient(listOf(DeepNavy, MedicalBlue, Color(0xFF1599C4))))
+                        .background(Brush.linearGradient(listOf(ext.heroStart, ext.heroMid, ext.heroEnd)))
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.img_hero_ai_pharmacist),
                         contentDescription = "3D AI Medical Assistant",
                         contentScale = ContentScale.Crop,
-                        alpha = 0.36f,
+                        alpha = 0.28f,
                         modifier = Modifier.matchParentSize()
+                    )
+                    AnimatedDnaHelixCanvas(
+                        modifier = Modifier.matchParentSize(),
+                        primaryColor = ElectricCyan.copy(alpha = 0.24f),
+                        secondaryColor = Color.White.copy(alpha = 0.14f)
                     )
                     Column(modifier = Modifier.padding(22.dp)) {
                         Surface(
                             shape = CircleShape,
-                            color = ElectricCyan.copy(alpha = 0.25f)
+                            color = Color.White.copy(alpha = 0.16f),
+                            border = BorderStroke(1.dp, ElectricCyan.copy(alpha = 0.45f))
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 11.dp, vertical = 5.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -423,40 +476,64 @@ fun HomeDashboardScreen(
                                     tint = ElectricCyan,
                                     modifier = Modifier.size(14.dp)
                                 )
-                                Spacer(Modifier.width(4.dp))
+                                Spacer(Modifier.width(5.dp))
                                 Text(
-                                    text = "9 LANGUAGES • EVIDENCE-GUIDED",
+                                    text = "9 LANGUAGES • EVIDENCE-GUIDED AI",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(14.dp))
                         Text(
                             text = "Meet Your AI Pharmacist",
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineLarge,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            text = "Get understandable information about medicines, interactions and pharmaceutical topics.",
+                            text = "Structured 6-section clinical answers on medicines, drug interactions, lab ranges, and packaging scans.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.92f)
+                            color = Color.White.copy(alpha = 0.90f)
                         )
-                        Spacer(Modifier.height(16.dp))
-                        Button(
-                            onClick = { onNavigate(DRxRoute.AI_PHARMACIST) },
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = DeepNavy
-                            ),
-                            modifier = Modifier.testTag("ask_ai_now_button")
+                        Spacer(Modifier.height(18.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Ask AI Now", fontWeight = FontWeight.Bold)
+                            Button(
+                                onClick = { onNavigate(DRxRoute.AI_PHARMACIST) },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = DeepNavy
+                                ),
+                                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
+                                modifier = Modifier.testTag("ask_ai_now_button")
+                            ) {
+                                Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Ask AI Now", fontWeight = FontWeight.Bold)
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White.copy(alpha = 0.14f),
+                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.30f)),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable { onNavigate(DRxRoute.PILL_SCANNER) }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Rounded.QrCodeScanner, contentDescription = "Pill Scanner", tint = ElectricCyan, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("Scan Pill", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                                }
+                            }
                         }
                     }
                 }
@@ -794,20 +871,37 @@ private fun SectionHeader(title: String, actionLabel: String, onAction: () -> Un
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = actionLabel,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(20.dp)
+                    .clip(CircleShape)
+                    .background(Brush.verticalGradient(listOf(MedicalBlue, ElectricCyan)))
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f),
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(CircleShape)
                 .clickable(onClick = onAction)
-                .padding(horizontal = 6.dp, vertical = 4.dp)
-        )
+        ) {
+            Text(
+                text = actionLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+            )
+        }
     }
 }
 
@@ -819,35 +913,61 @@ private fun QuickActionCard(
 ) {
     GlassMedicalCard(
         modifier = modifier
+            .clip(RoundedCornerShape(22.dp))
             .clickable(onClick = onClick)
             .testTag("quick_action_${item.route}"),
-        borderColor = item.accent.copy(alpha = 0.25f)
+        borderColor = item.accent.copy(alpha = 0.28f)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = item.accent.copy(alpha = 0.14f),
-                modifier = Modifier.size(44.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(item.icon, contentDescription = item.title, tint = item.accent, modifier = Modifier.size(24.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        listOf(item.accent.copy(alpha = 0.08f), Color.Transparent)
+                    )
+                )
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = item.accent.copy(alpha = 0.16f),
+                        border = BorderStroke(1.dp, item.accent.copy(alpha = 0.26f)),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(item.icon, contentDescription = item.title, tint = item.accent, modifier = Modifier.size(23.dp))
+                        }
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Rounded.ArrowForward,
+                        contentDescription = null,
+                        tint = item.accent.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = item.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = item.subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }

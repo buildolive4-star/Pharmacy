@@ -81,9 +81,12 @@ jobs:
 
           # 3. Optional: Inject Firebase App Check Debug Token for physical-device debug APKs
           if [ -n "$FIREBASE_APPCHECK_DEBUG_TOKEN" ]; then
-            echo "Injecting FIREBASE_APPCHECK_DEBUG_TOKEN into debug resources"
-            mkdir -p app/src/debug/res/values
-            printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="firebase_appcheck_debug_token" translatable="false">%s</string>\n</resources>\n' "$FIREBASE_APPCHECK_DEBUG_TOKEN" > app/src/debug/res/values/appcheck_debug_token.xml
+            CLEAN_APPCHECK_TOKEN=$(printf '%s' "$FIREBASE_APPCHECK_DEBUG_TOKEN" | tr -d '[:space:]"')
+            if [ -n "$CLEAN_APPCHECK_TOKEN" ]; then
+              echo "Injecting FIREBASE_APPCHECK_DEBUG_TOKEN into debug resources"
+              mkdir -p app/src/debug/res/values
+              printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="firebase_appcheck_debug_token" translatable="false">%s</string>\n</resources>\n' "$CLEAN_APPCHECK_TOKEN" > app/src/debug/res/values/appcheck_debug_token.xml
+            fi
           fi
 
           echo "All build configs verified successfully."
